@@ -23,12 +23,12 @@
   body {
     background-color: #F9F6F0;
     color: #1D3E2E;
-    font-family: var(--font-sans), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    font-family: var(--font-plus-jakarta), system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     overflow-x: hidden;
   }
 
   h1, h2, h3, .font-serif-header {
-    font-family: Georgia, Cambria, "Times New Roman", Times, serif;
+    font-family: var(--font-playfair), Georgia, Cambria, "Times New Roman", Times, serif;
   }
 }
 

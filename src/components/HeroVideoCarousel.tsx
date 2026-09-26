@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
@@ -12,6 +13,7 @@ const VIDEO_SLIDES = [
   {
     id: 1,
     src: '/videos/1.mp4',
+    poster: 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=1200&q=75',
     title: 'Fresh farm-to-door groceries,',
     titleHighlight: 'delivered across Pakistan.',
     description: 'Discover a local-first online grocery experience that brings fresh produce, dairy, and pantry essentials from trusted Pakistani growers to your home.',
@@ -20,6 +22,7 @@ const VIDEO_SLIDES = [
   {
     id: 2,
     src: '/videos/2.mp4',
+    poster: 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1200&q=75',
     title: 'Supporting local producers',
     titleHighlight: 'made effortless.',
     description: 'Fresh seasonal vegetables, cultured dairy, bakery staples, and responsibly sourced meats delivered straight to your door.',
@@ -28,6 +31,7 @@ const VIDEO_SLIDES = [
   {
     id: 3,
     src: '/videos/3.mp4',
+    poster: 'https://images.unsplash.com/photo-1574943320219-553eb213f72d?auto=format&fit=crop&w=1200&q=75',
     title: 'Smarter delivery routes,',
     titleHighlight: 'same-day freshness.',
     description: 'We organize neighborhood deliveries to reduce waste, save time, and bring peak freshness to homes across the country.',
@@ -91,16 +95,27 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
               idx === currentIndex ? 'opacity-100 z-0' : 'opacity-0 -z-10'
             }`}
           >
+            {/* Instant Poster Background */}
+            <Image
+              src={slide.poster}
+              alt=""
+              fill
+              priority={idx === 0}
+              sizes="100vw"
+              className="object-cover scale-105 filter brightness-90 pointer-events-none"
+            />
             <video
               ref={(el) => {
                 videoRefs.current[idx] = el;
               }}
               src={slide.src}
+              poster={slide.poster}
               playsInline
               muted={isMuted}
+              preload={idx === currentIndex ? 'auto' : 'metadata'}
               loop
               onEnded={handleNext}
-              className="w-full h-full object-cover scale-105 filter brightness-90 transition-transform duration-[10000ms] ease-out transform"
+              className="absolute inset-0 w-full h-full object-cover scale-105 filter brightness-90 transition-transform duration-[10000ms] ease-out transform"
             />
           </div>
         ))}

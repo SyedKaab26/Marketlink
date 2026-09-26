@@ -169,15 +169,23 @@ const dbConfig = {
   user: process.env.MYSQL_USER || 'root',
   password: process.env.MYSQL_PASSWORD ?? '',
   database: process.env.MYSQL_DATABASE || 'marketlink_db',
-  connectTimeout: 2000,
+  connectTimeout: 400,
 };
 
 let pool: DbPool | null = null;
 let isMysqlAvailable: boolean | null = null;
+let lastDbCheckTime = 0;
+const DB_CHECK_COOLDOWN_MS = 30000;
 
 export async function getDbPool() {
   if (pool) return pool;
 
+  const now = Date.now();
+  if (isMysqlAvailable === false && now - lastDbCheckTime < DB_CHECK_COOLDOWN_MS) {
+    return null;
+  }
+
+  lastDbCheckTime = now;
   try {
     const mysql = eval("require('mysql2/promise')") as { createPool: (config: typeof dbConfig) => DbPool };
     const testPool = mysql.createPool(dbConfig);
@@ -655,10 +663,12 @@ export async function fetchTestimonials(): Promise<Testimonial[]> {
 }
 
 export async function fetchAdminStats(): Promise<AdminStats> {
-  const orders = await fetchOrders();
-  const products = await fetchProducts();
-  const producers = await fetchProducers();
-  const users = await fetchUsers();
+  const [orders, products, producers, users] = await Promise.all([
+    fetchOrders(),
+    fetchProducts(),
+    fetchProducers(),
+    fetchUsers(),
+  ]);
 
   const grossRevenue = orders.reduce((sum, o) => sum + (Number(o.total_amount) || 0), 0);
   const ordersToday = orders.filter(o => o.status !== 'Cancelled').length;

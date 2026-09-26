@@ -349,6 +349,8 @@ export default function ChatbotWidget() {
                                     <img
                                       src={p.image}
                                       alt={p.name}
+                                      loading="lazy"
+                                      decoding="async"
                                       className="w-12 h-12 rounded-lg object-cover border border-[#E0D8C8] shrink-0"
                                     />
                                     <div className="min-w-0 flex-1">
