@@ -16,6 +16,7 @@ import AboutUsSection from '@/components/ui/about-us-section';
 import { ProductDropCard, type DropItem } from '@/components/ui/product-drop-card';
 import Testimonials from '@/components/ui/testimonials-demo';
 import CertifiedFarmersSection from '@/components/CertifiedFarmersSection';
+import FarmVideoCarousel from '@/components/FarmVideoCarousel';
 import { CartItem, Product, QuizResponse, User } from '@/lib/types';
 import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
 import { useCart, addToCart as addProductToCart, updateCartQuantity, clearCart } from '@/lib/cart';
@@ -376,6 +377,9 @@ export default function AboutPage() {
 
         {/* 6. CERTIFIED FARMERS & CERTIFICATIONS AUTO-SCROLL SECTION */}
         <CertifiedFarmersSection />
+
+        {/* 6.5 FARM VIDEO STORIES REELS CAROUSEL */}
+        <FarmVideoCarousel />
 
         {/* 7. MARKETS ACROSS PAKISTAN */}
         <section id="markets" className="scroll-mt-[76px] py-20 bg-[#F9F6F0] border-b border-[#E8E2D5]">
