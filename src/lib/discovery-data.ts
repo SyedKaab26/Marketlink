@@ -1,0 +1,167 @@
+export type DiscoveryCategory =
+  | 'Organic Vegetables'
+  | 'Fresh Fruits'
+  | 'Dairy & Poultry'
+  | 'Grains & Staples'
+  | 'Seeds & Herbs';
+
+export interface DiscoveryFarmer {
+  id: string;
+  name: string;
+  farmName: string;
+  slug: string;
+  avatar: string;
+  verified: boolean;
+  rating: number;
+  totalReviews: number;
+  district: string;
+  city: string;
+  distanceKm: number;
+  pickupAvailable: boolean;
+  completedOrders: number;
+  story: string;
+}
+
+export interface DiscoveryProduct {
+  id: string;
+  name: string;
+  slug: string;
+  category: DiscoveryCategory;
+  price: number;
+  originalPrice: number;
+  unit: string;
+  stock: number;
+  rating: number;
+  reviewsCount: number;
+  image: string;
+  farmer: DiscoveryFarmer;
+  organic: boolean;
+  sameDayPickup: boolean;
+  preorderAvailable: boolean;
+  bulkDeal: boolean;
+  createdAt: string;
+}
+
+export const DISCOVERY_FARMERS: Record<string, DiscoveryFarmer> = {
+  noor: {
+    id: 'farmer-noor', name: 'Noor Baloch', farmName: 'Noor Family Farm', slug: 'noor-family-farm',
+    avatar: 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?auto=format&fit=crop&w=160&q=80',
+    verified: true, rating: 4.9, totalReviews: 186, district: 'Gadap', city: 'Karachi', distanceKm: 8,
+    pickupAvailable: true, completedOrders: 1240,
+    story: 'A third-generation family farm growing seasonal vegetables with compost-rich soil and careful water use.'
+  },
+  ali: {
+    id: 'farmer-ali', name: 'Ali Raza', farmName: 'Malir Green Acres', slug: 'malir-green-acres',
+    avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80',
+    verified: true, rating: 4.8, totalReviews: 93, district: 'Malir', city: 'Karachi', distanceKm: 6,
+    pickupAvailable: true, completedOrders: 710,
+    story: 'We harvest early each morning and bring our produce straight from the Malir fields to your table.'
+  },
+  sana: {
+    id: 'farmer-sana', name: 'Sana Ahmed', farmName: 'Sindh Orchard Co-op', slug: 'sindh-orchard-coop',
+    avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?auto=format&fit=crop&w=160&q=80',
+    verified: true, rating: 4.9, totalReviews: 241, district: 'Tando Allahyar', city: 'Hyderabad', distanceKm: 31,
+    pickupAvailable: false, completedOrders: 1860,
+    story: 'Our cooperative brings together small orchard families for naturally ripened fruit and fair prices.'
+  },
+  hamza: {
+    id: 'farmer-hamza', name: 'Hamza Khan', farmName: 'Potohar Dairy & Fields', slug: 'potohar-dairy-fields',
+    avatar: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=160&q=80',
+    verified: true, rating: 4.7, totalReviews: 118, district: 'Raiwind', city: 'Lahore', distanceKm: 42,
+    pickupAvailable: true, completedOrders: 960,
+    story: 'A small family-run dairy and grain farm focused on clean feed, animal welfare and dependable quality.'
+  },
+  maryam: {
+    id: 'farmer-maryam', name: 'Maryam Bibi', farmName: 'Sargodha Citrus Grove', slug: 'sargodha-citrus-grove',
+    avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=160&q=80',
+    verified: true, rating: 4.8, totalReviews: 157, district: 'Bhalwal', city: 'Sargodha', distanceKm: 56,
+    pickupAvailable: false, completedOrders: 1130,
+    story: 'Our kinnow and citrus are picked at peak ripeness from orchards tended by our family for decades.'
+  },
+  farah: {
+    id: 'farmer-farah', name: 'Farah Iqbal', farmName: 'Green Basket Collective', slug: 'green-basket-collective',
+    avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80',
+    verified: false, rating: 4.6, totalReviews: 64, district: 'Gadap', city: 'Karachi', distanceKm: 14,
+    pickupAvailable: true, completedOrders: 430,
+    story: 'A neighborhood growing collective sharing herbs, leafy greens and kitchen garden favorites.'
+  }
+};
+
+export const DISCOVERY_FARMER_LIST = Object.values(DISCOVERY_FARMERS);
+
+export const DISCOVERY_CATEGORIES: DiscoveryCategory[] = [
+  'Organic Vegetables', 'Fresh Fruits', 'Dairy & Poultry', 'Grains & Staples', 'Seeds & Herbs'
+];
+
+export const DISCOVERY_PRODUCTS: DiscoveryProduct[] = [
+  { id: 'veg-tomato', name: 'Vine-Ripened Red Tomatoes', slug: 'vine-ripened-tomatoes', category: 'Organic Vegetables', price: 180, originalPrice: 220, unit: 'kg', stock: 34, rating: 4.8, reviewsCount: 86, image: 'https://images.unsplash.com/photo-1546094096-0df4bcaaa337?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'veg-spinach', name: 'Tender Baby Spinach', slug: 'baby-spinach', category: 'Organic Vegetables', price: 95, originalPrice: 120, unit: 'bunch', stock: 8, rating: 4.7, reviewsCount: 41, image: 'https://images.unsplash.com/photo-1576045057995-568f588f82fb?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-23' },
+  { id: 'veg-carrot', name: 'Sweet Farm Carrots', slug: 'sweet-farm-carrots', category: 'Organic Vegetables', price: 140, originalPrice: 160, unit: 'kg', stock: 52, rating: 4.9, reviewsCount: 103, image: 'https://images.unsplash.com/photo-1445282768818-728615cc910a?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: true, sameDayPickup: false, preorderAvailable: true, bulkDeal: true, createdAt: '2026-09-22' },
+  { id: 'veg-cucumber', name: 'Crisp Green Cucumbers', slug: 'green-cucumbers', category: 'Organic Vegetables', price: 110, originalPrice: 125, unit: 'kg', stock: 6, rating: 4.6, reviewsCount: 28, image: 'https://images.unsplash.com/photo-1604977042946-1eecc30f269e?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-24' },
+  { id: 'fruit-mango', name: 'Chaunsa Mangoes, Sweet & Juicy', slug: 'chaunsa-mangoes', category: 'Fresh Fruits', price: 320, originalPrice: 380, unit: 'kg', stock: 24, rating: 4.9, reviewsCount: 134, image: 'https://images.unsplash.com/photo-1553279768-865429fa0078?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.sana, organic: true, sameDayPickup: false, preorderAvailable: true, bulkDeal: true, createdAt: '2026-09-19' },
+  { id: 'fruit-kinnow', name: 'Sargodha Kinnow Oranges', slug: 'sargodha-kinnow', category: 'Fresh Fruits', price: 210, originalPrice: 250, unit: 'dozen', stock: 45, rating: 4.8, reviewsCount: 76, image: 'https://images.unsplash.com/photo-1547514701-42782101795e?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.maryam, organic: false, sameDayPickup: false, preorderAvailable: true, bulkDeal: true, createdAt: '2026-09-20' },
+  { id: 'fruit-strawberry', name: 'Fresh Picked Strawberries', slug: 'fresh-strawberries', category: 'Fresh Fruits', price: 450, originalPrice: 520, unit: 'box', stock: 5, rating: 4.7, reviewsCount: 53, image: 'https://images.unsplash.com/photo-1464965911861-746a04b4bca6?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-24' },
+  { id: 'fruit-guava', name: 'Pink Guava from the Orchard', slug: 'pink-guava', category: 'Fresh Fruits', price: 170, originalPrice: 190, unit: 'kg', stock: 18, rating: 4.5, reviewsCount: 34, image: 'https://images.unsplash.com/photo-1536511132770-e5058c7e8c46?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.sana, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-18' },
+  { id: 'dairy-eggs', name: 'Free-Range Desi Eggs', slug: 'free-range-desi-eggs', category: 'Dairy & Poultry', price: 390, originalPrice: 440, unit: 'dozen', stock: 19, rating: 4.9, reviewsCount: 121, image: 'https://images.unsplash.com/photo-1506976785307-8732e854ad03?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-21' },
+  { id: 'dairy-milk', name: 'Fresh Full-Cream Farm Milk', slug: 'farm-fresh-milk', category: 'Dairy & Poultry', price: 240, originalPrice: 270, unit: 'litre', stock: 7, rating: 4.8, reviewsCount: 92, image: 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: true, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-24' },
+  { id: 'dairy-yogurt', name: 'Traditional Creamy Dahi', slug: 'traditional-dahi', category: 'Dairy & Poultry', price: 180, originalPrice: 200, unit: '500 g', stock: 22, rating: 4.6, reviewsCount: 47, image: 'https://images.unsplash.com/photo-1571212515416-fef01fc43637?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-22' },
+  { id: 'grain-rice', name: 'Aromatic Super Kernel Basmati', slug: 'super-kernel-basmati', category: 'Grains & Staples', price: 480, originalPrice: 560, unit: 'kg', stock: 65, rating: 4.9, reviewsCount: 215, image: 'https://images.unsplash.com/photo-1586201375761-83865001e31c?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-16' },
+  { id: 'grain-chickpea', name: 'Desi Brown Chickpeas', slug: 'desi-brown-chickpeas', category: 'Grains & Staples', price: 260, originalPrice: 290, unit: 'kg', stock: 37, rating: 4.7, reviewsCount: 66, image: 'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: false, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-17' },
+  { id: 'herb-coriander', name: 'Fragrant Fresh Coriander', slug: 'fresh-coriander', category: 'Seeds & Herbs', price: 45, originalPrice: 60, unit: 'bunch', stock: 11, rating: 4.8, reviewsCount: 39, image: 'https://images.unsplash.com/photo-1515586000433-45406d8e6662?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-24' },
+  { id: 'herb-mint', name: 'Garden-Fresh Mint', slug: 'garden-fresh-mint', category: 'Seeds & Herbs', price: 50, originalPrice: 65, unit: 'bunch', stock: 26, rating: 4.6, reviewsCount: 31, image: 'https://images.unsplash.com/photo-1628556270448-4d4e4148e1b1?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-23' },
+  { id: 'veg-potato', name: 'Gadap Red Potatoes', slug: 'gadap-red-potatoes', category: 'Organic Vegetables', price: 125, originalPrice: 150, unit: 'kg', stock: 48, rating: 4.7, reviewsCount: 52, image: 'https://images.unsplash.com/photo-1518977676601-b53f82aba655?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'veg-onion', name: 'Golden Cooking Onions', slug: 'golden-cooking-onions', category: 'Organic Vegetables', price: 135, originalPrice: 155, unit: 'kg', stock: 62, rating: 4.6, reviewsCount: 44, image: 'https://images.unsplash.com/photo-1508747703725-719777637510?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'veg-capsicum', name: 'Sweet Green Capsicum', slug: 'sweet-green-capsicum', category: 'Organic Vegetables', price: 220, originalPrice: 260, unit: 'kg', stock: 17, rating: 4.8, reviewsCount: 37, image: 'https://images.unsplash.com/photo-1563565375-f3fdfdbefa83?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: true, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'fruit-banana', name: 'Sindh Sweet Bananas', slug: 'sindh-sweet-bananas', category: 'Fresh Fruits', price: 180, originalPrice: 210, unit: 'dozen', stock: 39, rating: 4.8, reviewsCount: 68, image: 'https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'fruit-jamun', name: 'Seasonal Black Jamun', slug: 'seasonal-black-jamun', category: 'Fresh Fruits', price: 280, originalPrice: 330, unit: '500 g', stock: 9, rating: 4.7, reviewsCount: 29, image: 'https://images.unsplash.com/photo-1550258987-190a2d41a8ba?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.sana, organic: true, sameDayPickup: false, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'fruit-dates', name: 'Khairpur Soft Dates', slug: 'khairpur-soft-dates', category: 'Fresh Fruits', price: 520, originalPrice: 600, unit: 'kg', stock: 28, rating: 4.9, reviewsCount: 88, image: 'https://images.unsplash.com/photo-1577234286642-fc512a5f8f11?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.sana, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'dairy-paneer', name: 'Fresh Malai Paneer', slug: 'fresh-malai-paneer', category: 'Dairy & Poultry', price: 520, originalPrice: 580, unit: '500 g', stock: 13, rating: 4.8, reviewsCount: 46, image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: true, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'dairy-butter', name: 'Cultured Farmhouse Butter', slug: 'cultured-farmhouse-butter', category: 'Dairy & Poultry', price: 460, originalPrice: 520, unit: '250 g', stock: 16, rating: 4.9, reviewsCount: 57, image: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-24' },
+  { id: 'dairy-chicken', name: 'Free-Range Desi Chicken', slug: 'free-range-desi-chicken', category: 'Dairy & Poultry', price: 980, originalPrice: 1100, unit: 'kg', stock: 7, rating: 4.8, reviewsCount: 63, image: 'https://images.unsplash.com/photo-1604503468506-a8da13d82791?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: false, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'grain-atta', name: 'Stoneground Whole Wheat Atta', slug: 'stoneground-whole-wheat-atta', category: 'Grains & Staples', price: 230, originalPrice: 260, unit: 'kg', stock: 55, rating: 4.8, reviewsCount: 71, image: 'https://images.unsplash.com/photo-1627485937980-221c88ac04f9?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'grain-moong', name: 'Unpolished Green Moong Daal', slug: 'green-moong-daal', category: 'Grains & Staples', price: 390, originalPrice: 440, unit: 'kg', stock: 33, rating: 4.7, reviewsCount: 49, image: 'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: false, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-23' },
+  { id: 'grain-bajra', name: 'Potohar Pearl Millet (Bajra)', slug: 'potohar-pearl-millet', category: 'Grains & Staples', price: 210, originalPrice: 240, unit: 'kg', stock: 29, rating: 4.6, reviewsCount: 24, image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: false, preorderAvailable: true, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'herb-cumin', name: 'Whole Aromatic Cumin Seeds', slug: 'whole-cumin-seeds', category: 'Seeds & Herbs', price: 340, originalPrice: 390, unit: '250 g', stock: 31, rating: 4.9, reviewsCount: 58, image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-23' },
+  { id: 'herb-chili', name: 'Fresh Green Chillies', slug: 'fresh-green-chillies', category: 'Seeds & Herbs', price: 160, originalPrice: 190, unit: 'kg', stock: 21, rating: 4.7, reviewsCount: 33, image: 'https://images.unsplash.com/photo-1588252303782-cb80119abd6d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'herb-turmeric', name: 'Fresh Raw Turmeric Root', slug: 'fresh-raw-turmeric', category: 'Seeds & Herbs', price: 260, originalPrice: 300, unit: '500 g', stock: 14, rating: 4.8, reviewsCount: 27, image: 'https://images.unsplash.com/photo-1615485500704-8e990f9900f1?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: false, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-24' },
+  { id: 'veg-brinjal', name: 'Glossy Purple Brinjal', slug: 'purple-brinjal', category: 'Organic Vegetables', price: 190, originalPrice: 220, unit: 'kg', stock: 23, rating: 4.7, reviewsCount: 32, image: 'https://images.unsplash.com/photo-1652781403547-7c17a0ade1a9?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'veg-cauliflower', name: 'Fresh White Cauliflower', slug: 'white-cauliflower', category: 'Organic Vegetables', price: 160, originalPrice: 185, unit: 'piece', stock: 15, rating: 4.6, reviewsCount: 25, image: 'https://images.unsplash.com/photo-1568584711075-3d021a7c3ca3?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: false, sameDayPickup: true, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-24' },
+  { id: 'fruit-pomegranate', name: 'Ruby Red Pomegranates', slug: 'ruby-red-pomegranates', category: 'Fresh Fruits', price: 390, originalPrice: 450, unit: 'kg', stock: 20, rating: 4.8, reviewsCount: 43, image: 'https://images.unsplash.com/photo-1541344999736-83eca272f6fc?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.sana, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'fruit-apple', name: 'Crisp Kaghan Valley Apples', slug: 'kaghan-valley-apples', category: 'Fresh Fruits', price: 360, originalPrice: 410, unit: 'kg', stock: 26, rating: 4.7, reviewsCount: 39, image: 'https://images.unsplash.com/photo-1560806887-1e4cd0b6cbd6?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.maryam, organic: false, sameDayPickup: false, preorderAvailable: true, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'dairy-lassi', name: 'Traditional Salted Lassi', slug: 'traditional-salted-lassi', category: 'Dairy & Poultry', price: 150, originalPrice: 180, unit: '500 ml', stock: 12, rating: 4.7, reviewsCount: 30, image: 'https://images.unsplash.com/photo-1553909489-cd47e0ef937f?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'dairy-cream', name: 'Thick Fresh Dairy Cream', slug: 'fresh-dairy-cream', category: 'Dairy & Poultry', price: 320, originalPrice: 360, unit: '250 ml', stock: 10, rating: 4.8, reviewsCount: 22, image: 'https://images.unsplash.com/photo-1628088062854-d1870b4553da?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: true, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'dairy-cheese', name: 'Farm-Made Paneer Cubes', slug: 'farm-made-paneer-cubes', category: 'Dairy & Poultry', price: 540, originalPrice: 600, unit: '500 g', stock: 9, rating: 4.8, reviewsCount: 35, image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'grain-masoor', name: 'Washed Red Masoor Daal', slug: 'washed-red-masoor-daal', category: 'Grains & Staples', price: 310, originalPrice: 350, unit: 'kg', stock: 38, rating: 4.7, reviewsCount: 45, image: 'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: false, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'grain-corn', name: 'Stoneground Makai Atta', slug: 'stoneground-makai-atta', category: 'Grains & Staples', price: 190, originalPrice: 220, unit: 'kg', stock: 27, rating: 4.6, reviewsCount: 21, image: 'https://images.unsplash.com/photo-1601593768794-7f71b4b2cdee?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'grain-barley', name: 'Whole Potohar Barley', slug: 'whole-potohar-barley', category: 'Grains & Staples', price: 220, originalPrice: 250, unit: 'kg', stock: 32, rating: 4.6, reviewsCount: 18, image: 'https://images.unsplash.com/photo-1574323347407-f5e1ad6d020b?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: false, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-23' },
+  { id: 'grain-kidney-beans', name: 'Red Kidney Beans (Rajma)', slug: 'red-kidney-beans-rajma', category: 'Grains & Staples', price: 420, originalPrice: 470, unit: 'kg', stock: 24, rating: 4.8, reviewsCount: 34, image: 'https://images.unsplash.com/photo-1551462147-ff29053bfc14?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'herb-basil', name: 'Fresh Sweet Basil Leaves', slug: 'fresh-sweet-basil', category: 'Seeds & Herbs', price: 90, originalPrice: 110, unit: 'bunch', stock: 13, rating: 4.7, reviewsCount: 19, image: 'https://images.unsplash.com/photo-1618375569909-3c8616cf7733?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'herb-garlic', name: 'Fresh Farm Garlic Bulbs', slug: 'fresh-farm-garlic', category: 'Seeds & Herbs', price: 320, originalPrice: 370, unit: 'kg', stock: 18, rating: 4.8, reviewsCount: 28, image: 'https://images.unsplash.com/photo-1540148426945-6cf22a6b2383?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-24' },
+  { id: 'herb-fenugreek', name: 'Fresh Fenugreek (Methi)', slug: 'fresh-fenugreek-methi', category: 'Seeds & Herbs', price: 70, originalPrice: 90, unit: 'bunch', stock: 16, rating: 4.6, reviewsCount: 17, image: 'https://images.unsplash.com/photo-1628556270448-4d4e4148e1b1?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'herb-fennel', name: 'Whole Green Fennel Seeds', slug: 'whole-green-fennel-seeds', category: 'Seeds & Herbs', price: 280, originalPrice: 320, unit: '250 g', stock: 25, rating: 4.8, reviewsCount: 26, image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-23' },
+  // Category 1: Organic Vegetables (4 new items)
+  { id: 'veg-peas', name: 'Fresh Green Peas (Matar)', slug: 'fresh-green-peas', category: 'Organic Vegetables', price: 160, originalPrice: 190, unit: 'kg', stock: 25, rating: 4.8, reviewsCount: 38, image: 'https://images.unsplash.com/photo-1587735243615-c03f25aaff15?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'veg-bhindi', name: 'Farm Fresh Bhindi (Ladyfinger)', slug: 'fresh-farm-bhindi', category: 'Organic Vegetables', price: 140, originalPrice: 165, unit: 'kg', stock: 18, rating: 4.7, reviewsCount: 29, image: 'https://images.unsplash.com/photo-1618160702438-9b02ab6515c9?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'veg-radish', name: 'Organic Red Radish (Mooli)', slug: 'organic-red-radish', category: 'Organic Vegetables', price: 80, originalPrice: 100, unit: 'bunch', stock: 22, rating: 4.6, reviewsCount: 19, image: 'https://images.unsplash.com/photo-1593105544559-ecb03bf76f82?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'veg-lauki', name: 'Tender Green Bottle Gourd (Lauki)', slug: 'tender-bottle-gourd', category: 'Organic Vegetables', price: 100, originalPrice: 120, unit: 'piece', stock: 14, rating: 4.8, reviewsCount: 24, image: 'https://images.unsplash.com/photo-1592417817098-8f3d6ef23a81?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: true, sameDayPickup: true, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-25' },
+  // Category 2: Fresh Fruits (4 new items)
+  { id: 'fruit-watermelon', name: 'Swat Sweet Watermelons', slug: 'swat-sweet-watermelons', category: 'Fresh Fruits', price: 250, originalPrice: 300, unit: 'piece', stock: 15, rating: 4.9, reviewsCount: 51, image: 'https://images.unsplash.com/photo-1587049352847-4a222e784d38?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.sana, organic: true, sameDayPickup: false, preorderAvailable: true, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'fruit-papaya', name: 'Farm Fresh Papaya', slug: 'farm-fresh-papaya', category: 'Fresh Fruits', price: 210, originalPrice: 240, unit: 'kg', stock: 12, rating: 4.7, reviewsCount: 33, image: 'https://images.unsplash.com/photo-1517260739337-6799d239ce83?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.sana, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'fruit-muskmelon', name: 'Sweet Muskmelon (Kharbooza)', slug: 'sweet-muskmelon', category: 'Fresh Fruits', price: 190, originalPrice: 220, unit: 'kg', stock: 20, rating: 4.8, reviewsCount: 42, image: 'https://images.unsplash.com/photo-1598170845058-12ef4a457539?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.maryam, organic: false, sameDayPickup: true, preorderAvailable: true, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'fruit-lychee', name: 'Juicy Khanpur Lychee', slug: 'juicy-khanpur-lychee', category: 'Fresh Fruits', price: 480, originalPrice: 550, unit: 'kg', stock: 10, rating: 4.9, reviewsCount: 64, image: 'https://images.unsplash.com/photo-1528825871115-3581a5387919?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.sana, organic: true, sameDayPickup: false, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-25' },
+  // Category 3: Dairy & Poultry (4 new items)
+  { id: 'dairy-ghee', name: 'Pure Golden Desi Ghee', slug: 'pure-golden-desi-ghee', category: 'Dairy & Poultry', price: 1450, originalPrice: 1650, unit: '500 g', stock: 14, rating: 4.9, reviewsCount: 89, image: 'https://images.unsplash.com/photo-1589985270826-4b7bb135bc9d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: true, preorderAvailable: true, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'dairy-buffalo-milk', name: 'Fresh Creamy Buffalo Milk', slug: 'fresh-creamy-buffalo-milk', category: 'Dairy & Poultry', price: 260, originalPrice: 290, unit: 'litre', stock: 16, rating: 4.8, reviewsCount: 45, image: 'https://images.unsplash.com/photo-1563636619-e9143da7973b?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'dairy-khoya', name: 'Artisanal Farm Khoya (Mawa)', slug: 'artisanal-farm-khoya', category: 'Dairy & Poultry', price: 650, originalPrice: 720, unit: '500 g', stock: 8, rating: 4.9, reviewsCount: 31, image: 'https://images.unsplash.com/photo-1571212515416-fef01fc43637?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: true, preorderAvailable: true, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'dairy-quail-eggs', name: 'Farm Fresh Quail Eggs', slug: 'farm-fresh-quail-eggs', category: 'Dairy & Poultry', price: 320, originalPrice: 360, unit: 'pack (12 pcs)', stock: 11, rating: 4.7, reviewsCount: 22, image: 'https://images.unsplash.com/photo-1516448620398-c5f44bf9f441?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  // Category 4: Grains & Staples (4 new items)
+  { id: 'grain-chana-daal', name: 'Yellow Chana Daal', slug: 'yellow-chana-daal', category: 'Grains & Staples', price: 280, originalPrice: 320, unit: 'kg', stock: 40, rating: 4.8, reviewsCount: 55, image: 'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: false, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'grain-kabuli-chana', name: 'White Kabuli Chana', slug: 'white-kabuli-chana', category: 'Grains & Staples', price: 380, originalPrice: 420, unit: 'kg', stock: 30, rating: 4.9, reviewsCount: 62, image: 'https://images.unsplash.com/photo-1585059819970-07f912128926?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'grain-mustard-seeds', name: 'Organic Whole Mustard Seeds (Rai)', slug: 'whole-mustard-seeds', category: 'Grains & Staples', price: 220, originalPrice: 250, unit: '250 g', stock: 25, rating: 4.7, reviewsCount: 28, image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.ali, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'grain-urad-daal', name: 'Unpolished Urad Daal Split', slug: 'unpolished-urad-daal', category: 'Grains & Staples', price: 360, originalPrice: 400, unit: 'kg', stock: 28, rating: 4.7, reviewsCount: 39, image: 'https://images.unsplash.com/photo-1515543904379-3d757afe72e4?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.hamza, organic: false, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  // Category 5: Seeds & Herbs (4 new items)
+  { id: 'herb-ginger', name: 'Fresh Organic Ginger Root (Adrak)', slug: 'fresh-organic-ginger', category: 'Seeds & Herbs', price: 340, originalPrice: 390, unit: '500 g', stock: 19, rating: 4.8, reviewsCount: 41, image: 'https://images.unsplash.com/photo-1615485290382-441e4d049cb5?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'herb-black-pepper', name: 'Whole Black Pepper (Kali Mirch)', slug: 'whole-black-pepper', category: 'Seeds & Herbs', price: 420, originalPrice: 480, unit: '250 g', stock: 22, rating: 4.9, reviewsCount: 53, image: 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: false, preorderAvailable: false, bulkDeal: true, createdAt: '2026-09-25' },
+  { id: 'herb-carom', name: 'Organic Carom Seeds (Ajwain)', slug: 'organic-carom-seeds', category: 'Seeds & Herbs', price: 210, originalPrice: 240, unit: '250 g', stock: 20, rating: 4.7, reviewsCount: 31, image: 'https://images.unsplash.com/photo-1596040033229-a9821ebd058d?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.noor, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' },
+  { id: 'herb-curry-leaves', name: 'Fresh Green Curry Leaves', slug: 'fresh-curry-leaves', category: 'Seeds & Herbs', price: 60, originalPrice: 75, unit: 'bunch', stock: 15, rating: 4.8, reviewsCount: 27, image: 'https://images.unsplash.com/photo-1618375569909-3c8616cf7733?auto=format&fit=crop&w=720&q=85', farmer: DISCOVERY_FARMERS.farah, organic: true, sameDayPickup: true, preorderAvailable: false, bulkDeal: false, createdAt: '2026-09-25' }
+];
