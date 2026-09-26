@@ -30,7 +30,7 @@ export type GlyphPortalProps = {
   fontFamily?: string;
   fontWeight?: number;
   annotations?: boolean;
-  enterLabel?: string;
+  enterLabel?: string | null;
   className?: string;
   style?: GlyphPortalStyle;
   /** Called once per rendered scroll frame, never through React state. */
@@ -89,7 +89,7 @@ function scrollParent(element: HTMLElement): HTMLElement | null {
 export default function GlyphPortal({
   word = "SUBLIME", focusChar, interactive = true, background, front, children, scrollLength = 2.4,
   fontFamily = DEFAULT_FONT, fontWeight = 900, annotations = false,
-  enterLabel = "Enter section", className, style, onProgress,
+  enterLabel, className, style, onProgress,
 }: GlyphPortalProps) {
   const uid = `gp-${useId().replace(/[^a-zA-Z0-9]/g, "")}`;
   const clipId = `${uid}-clip`;
@@ -412,7 +412,9 @@ export default function GlyphPortal({
         <span data-gp-fallback aria-hidden="true" style={{ fontFamily, fontWeight: weight }}>{text}</span>
         <div data-gp-caption>
           <span data-gp-hint aria-hidden="true">{interactive ? "Scroll to enter." : annotations ? "A passage through type" : ""}</span>
-          <a data-gp-enter href={`#${uid}-content`}>{enterLabel}<span aria-hidden="true">↘</span></a>
+          {enterLabel ? (
+            <a data-gp-enter href={`#${uid}-content`}>{enterLabel}<span aria-hidden="true">↘</span></a>
+          ) : null}
         </div>
       </div>
       <div data-gp-content id={`${uid}-content`} tabIndex={-1}>

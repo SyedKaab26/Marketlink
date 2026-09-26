@@ -1,7 +1,9 @@
-import AboutUsSection from "@/components/ui/about-us-section";
+import CarouselStacked from "@/components/ui/carousel-07";
 
-const DemoOne = () => {
-  return <AboutUsSection />;
-};
-
-export { DemoOne };
+export default function Default() {
+  return (
+    <div className="w-full">
+      <CarouselStacked />
+    </div>
+  );
+}

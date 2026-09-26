@@ -1,8 +1,7 @@
 'use client';
 
-import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
-import { ChevronLeft, ChevronRight, Clock3, ShoppingBag } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, Clock3, ShoppingBag, Check } from 'lucide-react';
 
 export interface DropItem {
   id?: number;
@@ -22,161 +21,161 @@ export interface ProductDropCardProps {
 }
 
 export function ProductDropCard({ title, subtitle, items, onAddToCart }: ProductDropCardProps) {
-  const carouselRef = useRef<HTMLDivElement>(null);
-  const [canGoPrev, setCanGoPrev] = useState(false);
-  const [canGoNext, setCanGoNext] = useState(false);
-  const [isPaused, setIsPaused] = useState(false);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const [addedItemId, setAddedItemId] = useState<string | null>(null);
 
-  useEffect(() => {
-    const carousel = carouselRef.current;
-    if (!carousel) return;
+  // Duplicate items array to create a seamless infinite scrolling loop
+  const duplicatedItems = [...items, ...items];
 
-    const updateControls = () => {
-      setCanGoPrev(carousel.scrollLeft > 1);
-      setCanGoNext(carousel.scrollLeft + carousel.clientWidth < carousel.scrollWidth - 1);
-    };
+  const handleManualScroll = (direction: 'left' | 'right') => {
+    if (!scrollContainerRef.current) return;
+    const scrollAmount = 340;
+    scrollContainerRef.current.scrollBy({
+      left: direction === 'left' ? -scrollAmount : scrollAmount,
+      behavior: 'smooth',
+    });
+  };
 
-    const frame = window.requestAnimationFrame(updateControls);
-    const resizeObserver = new ResizeObserver(updateControls);
-    resizeObserver.observe(carousel);
-    carousel.addEventListener('scroll', updateControls, { passive: true });
-    window.addEventListener('resize', updateControls);
-
-    return () => {
-      window.cancelAnimationFrame(frame);
-      resizeObserver.disconnect();
-      carousel.removeEventListener('scroll', updateControls);
-      window.removeEventListener('resize', updateControls);
-    };
-  }, [items.length]);
-
-  useEffect(() => {
-    const carousel = carouselRef.current;
-    if (!carousel || isPaused || items.length < 2) return;
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
-    const interval = window.setInterval(() => {
-      if (document.hidden || carousel.scrollWidth <= carousel.clientWidth) return;
-
-      const firstItem = carousel.firstElementChild;
-      if (!(firstItem instanceof HTMLElement)) return;
-
-      const gap = Number.parseFloat(window.getComputedStyle(carousel).columnGap) || 0;
-      const atEnd = carousel.scrollLeft + carousel.clientWidth >= carousel.scrollWidth - 1;
-      carousel.scrollTo({
-        left: atEnd ? 0 : carousel.scrollLeft + firstItem.offsetWidth + gap,
-        behavior: 'smooth',
-      });
-    }, 4000);
-
-    return () => window.clearInterval(interval);
-  }, [isPaused, items.length]);
-
-  const scrollByItem = (direction: -1 | 1) => {
-    const carousel = carouselRef.current;
-    const firstItem = carousel?.firstElementChild;
-    if (!carousel || !(firstItem instanceof HTMLElement)) return;
-
-    const gap = Number.parseFloat(window.getComputedStyle(carousel).columnGap) || 0;
-    carousel.scrollBy({ left: direction * (firstItem.offsetWidth + gap), behavior: 'smooth' });
+  const handleCartClick = (e: React.MouseEvent, item: DropItem, uniqueId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setAddedItemId(uniqueId);
+    if (onAddToCart) {
+      onAddToCart(item);
+    }
+    setTimeout(() => {
+      setAddedItemId(null);
+    }, 1500);
   };
 
   return (
-    <section
-      className="border-b border-[#E8E2D5] bg-[#F4EFE6] py-16 sm:py-20"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onFocusCapture={() => setIsPaused(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
-          setIsPaused(false);
+    <section className="relative border-b border-[#E8E2D5] bg-[#F4EFE6] py-16 sm:py-20 overflow-hidden">
+      <style>{`
+        @keyframes continuousScrollFarm {
+          0% {
+            transform: translateX(-50%);
+          }
+          100% {
+            transform: translateX(0);
+          }
         }
-      }}
-    >
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 flex items-end justify-between gap-4 sm:mb-10">
-          <div className="max-w-2xl space-y-3">
-            <p className="text-xs font-extrabold uppercase tracking-widest text-[#E06D3B]">
-              Just harvested
-            </p>
-            <h2 className="font-serif text-3xl font-bold text-[#1D3E2E] sm:text-4xl">{title}</h2>
-            <p className="text-sm leading-relaxed text-[#55695E] sm:text-base">{subtitle}</p>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <button
-              type="button"
-              onClick={() => scrollByItem(-1)}
-              disabled={!canGoPrev}
-              aria-label="Previous harvest picks"
-              className="flex size-10 items-center justify-center rounded-full border border-[#D8CEBB] bg-white text-[#1D3E2E] transition-colors hover:border-[#E06D3B] hover:text-[#E06D3B] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronLeft className="size-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollByItem(1)}
-              disabled={!canGoNext}
-              aria-label="Next harvest picks"
-              className="flex size-10 items-center justify-center rounded-full border border-[#D8CEBB] bg-white text-[#1D3E2E] transition-colors hover:border-[#E06D3B] hover:text-[#E06D3B] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronRight className="size-5" />
-            </button>
-          </div>
-        </div>
 
+        .farm-marquee-track {
+          display: flex;
+          width: max-content;
+          animation: continuousScrollFarm 40s linear infinite;
+        }
+
+        .farm-marquee-track:hover {
+          animation-play-state: paused;
+        }
+      `}</style>
+
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 mb-8 sm:mb-10 flex items-end justify-between gap-4">
+        <div className="max-w-2xl space-y-3">
+          <p className="text-xs font-extrabold uppercase tracking-widest text-[#E06D3B]">
+            Just harvested
+          </p>
+          <h2 className="font-serif text-3xl font-bold text-[#1D3E2E] sm:text-4xl">{title}</h2>
+          <p className="text-sm leading-relaxed text-[#55695E] sm:text-base">{subtitle}</p>
+        </div>
+        <div className="flex shrink-0 gap-2">
+          <button
+            type="button"
+            onClick={() => handleManualScroll('left')}
+            aria-label="Previous harvest picks"
+            className="flex size-10 items-center justify-center rounded-full border border-[#D8CEBB] bg-white text-[#1D3E2E] shadow-sm transition-all hover:border-[#E06D3B] hover:bg-[#E06D3B] hover:text-white cursor-pointer active:scale-95"
+          >
+            <ChevronLeft className="size-5" />
+          </button>
+          <button
+            type="button"
+            onClick={() => handleManualScroll('right')}
+            aria-label="Next harvest picks"
+            className="flex size-10 items-center justify-center rounded-full border border-[#D8CEBB] bg-white text-[#1D3E2E] shadow-sm transition-all hover:border-[#E06D3B] hover:bg-[#E06D3B] hover:text-white cursor-pointer active:scale-95"
+          >
+            <ChevronRight className="size-5" />
+          </button>
+        </div>
+      </div>
+
+      {/* Marquee Carousel Container with Gradient Side Fades */}
+      <div className="relative w-full overflow-hidden">
+        {/* Left Side Fade Gradient */}
+        <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-r from-[#F4EFE6] to-transparent z-20" />
+
+        {/* Right Side Fade Gradient */}
+        <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-12 sm:w-24 bg-gradient-to-l from-[#F4EFE6] to-transparent z-20" />
+
+        {/* Scrolling Track Container */}
         <div
-          ref={carouselRef}
-          className="flex snap-x snap-mandatory gap-4 overflow-x-auto scroll-smooth [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label="Fresh harvest picks"
-          aria-roledescription="carousel"
+          ref={scrollContainerRef}
+          className="overflow-x-auto scrollbar-none py-2 px-4 scroll-smooth"
         >
-          {items.map((item) => (
-            <article
-              key={item.name}
-              className="flex w-[86%] shrink-0 snap-start flex-col overflow-hidden rounded-xl border border-[#E0D8C8] bg-white sm:w-[calc((100%-1rem)/2)] lg:w-[calc((100%-2rem)/3)]"
-            >
-              <div className="relative aspect-[4/3] bg-[#E8E2D5]">
-                <Image
-                  src={item.imageSrc}
-                  alt={item.name}
-                  fill
-                  unoptimized
-                  sizes="(max-width: 640px) 86vw, (max-width: 1024px) 48vw, 32vw"
-                  className="object-cover"
-                />
-              </div>
-              <div className="flex flex-1 flex-col space-y-3 p-4 sm:p-5">
-                <p className="flex items-center gap-2 text-xs font-semibold text-[#8B7355]">
-                  <Clock3 className="size-4 text-[#E06D3B]" />
-                  {item.time}
-                </p>
-                <div>
-                  <h3 className="font-serif text-xl font-bold text-[#1D3E2E]">{item.name}</h3>
-                  <p className="mt-1 text-sm text-[#55695E]">{item.collection}</p>
-                </div>
-                <div className="mt-auto flex items-center justify-between border-t border-[#EEE8DC] pt-3">
-                  <div>
-                    <span className="text-lg font-extrabold text-[#1D3E2E]">
-                      Rs. {item.price.toLocaleString('en-PK')}
-                    </span>
-                    <span className="text-sm text-[#8B7355]"> / {item.unit}</span>
+          <div className="farm-marquee-track gap-4 sm:gap-6">
+            {duplicatedItems.map((item, idx) => {
+              const uniqueId = `${item.name}-${idx}`;
+              const isAdded = addedItemId === uniqueId;
+
+              return (
+                <article
+                  key={uniqueId}
+                  className="group relative flex w-[280px] sm:w-[320px] shrink-0 flex-col overflow-hidden rounded-2xl border border-[#E0D8C8] bg-white shadow-sm hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1"
+                >
+                  <div className="relative aspect-[4/3] bg-[#E8E2D5] overflow-hidden">
+                    <img
+                      src={item.imageSrc}
+                      alt={item.name}
+                      className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
+                    />
                   </div>
-                  {onAddToCart && (
-                    <button
-                      type="button"
-                      onClick={() => onAddToCart(item)}
-                      className="flex items-center gap-1.5 bg-[#1D3E2E] hover:bg-[#E06D3B] text-white px-3 py-2 rounded-lg text-xs font-bold transition-colors shadow-sm"
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5" />
-                      <span>Add to Cart</span>
-                    </button>
-                  )}
-                </div>
-              </div>
-            </article>
-          ))}
+                  <div className="flex flex-1 flex-col space-y-3 p-4 sm:p-5">
+                    <p className="flex items-center gap-2 text-xs font-semibold text-[#8B7355]">
+                      <Clock3 className="size-4 text-[#E06D3B]" />
+                      {item.time}
+                    </p>
+                    <div>
+                      <h3 className="font-serif text-xl font-bold text-[#1D3E2E]">{item.name}</h3>
+                      <p className="mt-1 text-sm text-[#55695E] line-clamp-1">{item.collection}</p>
+                    </div>
+                    <div className="mt-auto flex items-center justify-between border-t border-[#EEE8DC] pt-3">
+                      <div>
+                        <span className="text-lg font-extrabold text-[#1D3E2E]">
+                          Rs. {item.price.toLocaleString('en-PK')}
+                        </span>
+                        <span className="text-sm text-[#8B7355]"> / {item.unit}</span>
+                      </div>
+                      {onAddToCart && (
+                        <button
+                          type="button"
+                          onClick={(e) => handleCartClick(e, item, uniqueId)}
+                          className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-xs font-bold transition-all shadow-sm cursor-pointer ${
+                            isAdded
+                              ? 'bg-emerald-600 text-white scale-105 ring-2 ring-emerald-400'
+                              : 'bg-[#1D3E2E] hover:bg-[#E06D3B] text-white active:scale-95'
+                          }`}
+                        >
+                          {isAdded ? (
+                            <>
+                              <Check className="w-3.5 h-3.5 stroke-[3]" />
+                              <span>Added</span>
+                            </>
+                          ) : (
+                            <>
+                              <ShoppingBag className="w-3.5 h-3.5" />
+                              <span>Add to Cart</span>
+                            </>
+                          )}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
         </div>
       </div>
     </section>
   );
-}
+}

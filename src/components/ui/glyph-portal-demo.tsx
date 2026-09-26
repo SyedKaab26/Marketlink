@@ -156,7 +156,6 @@ export default function GlyphPortalDemo(props: Partial<typeof settings>) {
         scrollLength={s.scrollLength}
         interactive={s.interactive}
         annotations={s.annotations}
-        enterLabel="Step Inside Harvest"
         background={
           <div
             style={{

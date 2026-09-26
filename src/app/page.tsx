@@ -14,10 +14,11 @@ import HeroVideoCarousel from '@/components/HeroVideoCarousel';
 import TimelineBlock01 from '@/components/ui/timeline-01';
 import GlyphPortalDemo from '@/components/ui/glyph-portal-demo';
 import RoutineResetBundleSection from '@/components/RoutineResetBundleSection';
+import ShopCollectionsSection from '@/components/ShopCollectionsSection';
+import WhatBringsYouHereSection from '@/components/WhatBringsYouHereSection';
 import { ProductDropCard, type DropItem } from '@/components/ui/product-drop-card';
+import CarouselStacked from '@/components/ui/carousel-07';
 import Testimonials from '@/components/ui/testimonials-demo';
-import CertifiedFarmersSection from '@/components/CertifiedFarmersSection';
-import FarmVideoCarousel from '@/components/FarmVideoCarousel';
 import { CartItem, Product, QuizResponse, User } from '@/lib/types';
 import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
 import { useCart, addToCart as addProductToCart, updateCartQuantity, clearCart } from '@/lib/cart';
@@ -207,6 +208,27 @@ export default function AboutPage() {
     setIsCartOpen(true);
   };
 
+  const handleBestSellerAddToCart = (item: { title: string; price: string; subtitle: string; imageSrc: string }) => {
+    const priceNum = parseInt(item.price.replace(/\D/g, '')) || 500;
+    const cleanTitle = item.title.replace('\n', ' ');
+    const product: Product = {
+      id: Math.floor(Math.random() * 10000) + 200,
+      name: cleanTitle,
+      slug: cleanTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+      price: priceNum,
+      unit: item.price.includes('/') ? item.price.split('/')[1].trim() : '1 kg',
+      category_id: 1,
+      producer_id: 1,
+      image_url: item.imageSrc,
+      dietary_tags: 'Best Seller',
+      description: item.subtitle,
+      featured: true,
+      in_stock: true,
+    };
+    addProductToCart(product, 1);
+    setIsCartOpen(true);
+  };
+
   const handleQuizComplete = (quizData: QuizResponse) => {
     alert(`MarketLink cart initialized for ZIP ${quizData.zipcode}! Redirecting to product selection...`);
     window.location.href = '/shop';
@@ -369,6 +391,12 @@ export default function AboutPage() {
         {/* GLYPH PORTAL DEMO */}
         <GlyphPortalDemo />
 
+        {/* SHOP COLLECTIONS SECTION */}
+        <ShopCollectionsSection />
+
+        {/* WHAT BRINGS YOU HERE SECTION */}
+        <WhatBringsYouHereSection onAddToCart={handleBestSellerAddToCart} />
+
         {/* 5. THIS WEEK'S HARVEST */}
         <ProductDropCard
           title="This week's farm picks"
@@ -377,11 +405,6 @@ export default function AboutPage() {
           onAddToCart={handleDropAddToCart}
         />
 
-        {/* 6. CERTIFIED FARMERS & CERTIFICATIONS AUTO-SCROLL SECTION */}
-        <CertifiedFarmersSection />
-
-        {/* 6.5 FARM VIDEO STORIES REELS CAROUSEL */}
-        <FarmVideoCarousel />
 
         {/* 7. MARKETS ACROSS PAKISTAN */}
         <section id="markets" className="scroll-mt-[76px] py-20 bg-[#F9F6F0] border-b border-[#E8E2D5]">
@@ -458,6 +481,22 @@ export default function AboutPage() {
               </div>
             </div>
           </div>
+        </section>
+
+        {/* OUR BEST FARMERS - STACKED CAROUSEL */}
+        <section className="py-16 bg-[#F4EFE6] border-b border-[#E8E2D5] overflow-hidden">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center mb-6">
+            <p className="text-xs font-extrabold uppercase tracking-widest text-[#E06D3B] mb-2">
+              Heart of MarketLink
+            </p>
+            <h3 className="font-serif text-2xl sm:text-3xl font-bold text-[#1D3E2E]">
+              Our Best Farmers & Producers
+            </h3>
+            <p className="text-xs sm:text-sm text-[#55695E] mt-1 max-w-lg mx-auto">
+              Meet the dedicated growers bringing fresh organic produce directly from Pakistan's valleys to your doorstep.
+            </p>
+          </div>
+          <CarouselStacked />
         </section>
 
         {/* 8. TESTIMONIALS SECTION */}
