@@ -12,7 +12,8 @@ import CartDrawer from '@/components/CartDrawer';
 import DbStatusBadge from '@/components/DbStatusBadge';
 import HeroVideoCarousel from '@/components/HeroVideoCarousel';
 import TimelineBlock01 from '@/components/ui/timeline-01';
-import AboutUsSection from '@/components/ui/about-us-section';
+import GlyphPortalDemo from '@/components/ui/glyph-portal-demo';
+import RoutineResetBundleSection from '@/components/RoutineResetBundleSection';
 import { ProductDropCard, type DropItem } from '@/components/ui/product-drop-card';
 import Testimonials from '@/components/ui/testimonials-demo';
 import CertifiedFarmersSection from '@/components/CertifiedFarmersSection';
@@ -359,13 +360,14 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* 3. OUR STORY TIMELINE */}
+        {/* 3. ROUTINE RESET BUNDLE SECTION */}
+        <RoutineResetBundleSection onOpenQuiz={() => setIsQuizOpen(true)} />
+
+        {/* 4. OUR STORY TIMELINE */}
         <TimelineBlock01 />
 
-        {/* 4. ABOUT US SECTION */}
-        <div id="about" className="scroll-mt-[76px]">
-          <AboutUsSection />
-        </div>
+        {/* GLYPH PORTAL DEMO */}
+        <GlyphPortalDemo />
 
         {/* 5. THIS WEEK'S HARVEST */}
         <ProductDropCard

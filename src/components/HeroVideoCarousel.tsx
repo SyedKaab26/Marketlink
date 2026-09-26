@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, ChevronLeft, ChevronRight, Play, Pause, Volume2, VolumeX, Film } from 'lucide-react';
+import { ArrowRight, Sparkles, ChevronLeft, ChevronRight, Film } from 'lucide-react';
 
 interface HeroVideoCarouselProps {
   onOpenQuiz: () => void;
@@ -127,8 +127,6 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
     setCurrentIndex((prev) => (prev + 1) % VIDEO_SLIDES.length);
   };
 
-  const togglePlay = () => setIsPlaying((prev) => !prev);
-  const toggleMute = () => setIsMuted((prev) => !prev);
 
   const activeSlide = VIDEO_SLIDES[currentIndex];
 
@@ -178,28 +176,6 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-transparent via-black/20 to-black/70 z-10 pointer-events-none" />
       </div>
 
-      {/* Media Controls Bar (Top Right) */}
-      <div className="absolute top-6 right-6 z-30 flex items-center gap-3 bg-black/40 backdrop-blur-md p-1.5 rounded-full border border-white/20">
-        <button
-          type="button"
-          onClick={togglePlay}
-          aria-label={isPlaying ? 'Pause Video' : 'Play Video'}
-          className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-colors"
-          title={isPlaying ? 'Pause Carousel' : 'Play Carousel'}
-        >
-          {isPlaying ? <Pause className="w-4 h-4 fill-white" /> : <Play className="w-4 h-4 fill-white ml-0.5" />}
-        </button>
-
-        <button
-          type="button"
-          onClick={toggleMute}
-          aria-label={isMuted ? 'Unmute Sound' : 'Mute Sound'}
-          className="w-10 h-10 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-colors"
-          title={isMuted ? 'Unmute Audio' : 'Mute Audio'}
-        >
-          {isMuted ? <VolumeX className="w-4 h-4 text-red-400" /> : <Volume2 className="w-4 h-4 text-emerald-400" />}
-        </button>
-      </div>
 
       {/* Navigation Arrow Left */}
       <button
@@ -277,46 +253,6 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
         </div>
       </div>
 
-      {/* Video Carousel Selector & Progress Bar (Bottom Bar) */}
-      <div className="absolute bottom-6 left-0 right-0 z-30 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-black/40 backdrop-blur-lg border border-white/15 p-3 rounded-2xl">
-          {/* Video Slide Tabs */}
-          <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 scrollbar-none">
-            {VIDEO_SLIDES.map((slide, idx) => {
-              const isActive = idx === currentIndex;
-              return (
-                <button
-                  key={slide.id}
-                  type="button"
-                  onClick={() => {
-                    setProgress(0);
-                    setCurrentIndex(idx);
-                  }}
-                  className={`flex items-center gap-3 px-4 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-                    isActive
-                      ? 'bg-white/20 text-white border border-white/30 shadow-lg'
-                      : 'bg-black/20 text-white/70 hover:bg-white/10 hover:text-white border border-transparent'
-                  }`}
-                >
-                  <span className={`w-2 h-2 rounded-full ${isActive ? 'bg-[#FF8A50] animate-pulse' : 'bg-white/40'}`} />
-                  <span>0{slide.id}. {slide.badge}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Active Video Progress Bar & Counter */}
-          <div className="flex items-center gap-3 w-full sm:w-48 shrink-0">
-            <span className="text-xs text-white/60 font-mono">0{currentIndex + 1} / 0{VIDEO_SLIDES.length}</span>
-            <div className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden relative">
-              <div
-                className="h-full bg-[#E06D3B] transition-all duration-100 ease-linear rounded-full"
-                style={{ width: `${progress}%` }}
-              />
-            </div>
-          </div>
-        </div>
-      </div>
     </section>
   );
 }

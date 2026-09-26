@@ -58,7 +58,7 @@ export default function Footer() {
           <div>
             <h3 className="font-semibold text-white text-xs mb-4 tracking-wider uppercase">About & Network</h3>
             <ul className="space-y-2.5 text-sm text-[#A0B5A8]">
-              <li><Link href="/#about" className="hover:text-white transition-colors">About Us</Link></li>
+              <li><Link href="/about" className="hover:text-white transition-colors">About Us</Link></li>
               <li><Link href="/producers" className="hover:text-white transition-colors">Our Partner Farmers</Link></li>
               <li><Link href="/#markets" className="hover:text-white transition-colors">Regional Market Hubs</Link></li>
             </ul>
