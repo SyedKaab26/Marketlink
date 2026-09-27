@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { fetchUsers, deleteUser } from '@/lib/db';
+import { fetchUsers, deleteUser, saveUser } from '@/lib/db';
 import { getErrorMessage } from '@/lib/utils';
 
 export async function GET() {
@@ -8,6 +8,28 @@ export async function GET() {
     return NextResponse.json({ success: true, count: users.length, users });
   } catch (error: unknown) {
     return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const { email, password = 'password123', full_name, address, role = 'customer' } = await request.json();
+
+    if (!email || !full_name) {
+      return NextResponse.json({ success: false, error: 'Email and Full Name are required' }, { status: 400 });
+    }
+
+    const newUser = await saveUser({
+      email: email.trim(),
+      password,
+      full_name: full_name.trim(),
+      address: address ? address.trim() : '',
+      role
+    });
+
+    return NextResponse.json({ success: true, user: newUser });
+  } catch (error: unknown) {
+    return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 400 });
   }
 }
 

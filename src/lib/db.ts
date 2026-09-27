@@ -85,13 +85,13 @@ const INITIAL_ORDERS: Order[] = [
   }
 ];
 
-const INITIAL_USERS: User[] = [
-  { id: 1, full_name: 'Ayesha Khan', email: 'ayesha.k@example.com', zipcode: '44000', address: 'Islamabad', role: 'customer', created_at: '2026-01-15' },
-  { id: 2, full_name: 'Bilal Raza', email: 'bilal.raza@example.com', zipcode: '54000', address: 'Lahore', role: 'customer', created_at: '2026-02-10' },
-  { id: 3, full_name: 'Sara Malik', email: 'sara.m@example.com', zipcode: '75500', address: 'Karachi', role: 'customer', created_at: '2026-03-01' },
-  { id: 4, full_name: 'Hamza Ali', email: 'hamza.a@example.com', zipcode: '54000', address: 'Lahore', role: 'customer', created_at: '2026-04-12' },
-  { id: 5, full_name: 'Tariq Mehmood', email: 'tariq.m@example.com', zipcode: '47000', address: 'Rawalpindi', role: 'farmer', created_at: '2025-11-20' },
-  { id: 6, full_name: 'MarketLink Admin', email: 'admin@marketlink.com', zipcode: '44000', address: 'Headquarters', role: 'admin', created_at: '2025-01-01' },
+const INITIAL_USERS: (User & { password?: string; password_hash?: string })[] = [
+  { id: 1, full_name: 'Ayesha Khan', email: 'ayesha.k@example.com', zipcode: '44000', address: 'Islamabad', role: 'customer', password: 'password123', password_hash: 'password123', created_at: '2026-01-15' },
+  { id: 2, full_name: 'Bilal Raza', email: 'bilal.raza@example.com', zipcode: '54000', address: 'Lahore', role: 'customer', password: 'password123', password_hash: 'password123', created_at: '2026-02-10' },
+  { id: 3, full_name: 'Sara Malik', email: 'sara.m@example.com', zipcode: '75500', address: 'Karachi', role: 'customer', password: 'password123', password_hash: 'password123', created_at: '2026-03-01' },
+  { id: 4, full_name: 'Hamza Ali', email: 'hamza.a@example.com', zipcode: '54000', address: 'Lahore', role: 'customer', password: 'password123', password_hash: 'password123', created_at: '2026-04-12' },
+  { id: 5, full_name: 'Tariq Mehmood', email: 'tariq.m@example.com', zipcode: '47000', address: 'Rawalpindi', role: 'farmer', password: 'password123', password_hash: 'password123', created_at: '2025-11-20' },
+  { id: 6, full_name: 'MarketLink Admin', email: 'admin@marketlink.com', zipcode: '44000', address: 'Headquarters', role: 'admin', password: 'admin123', password_hash: 'admin123', created_at: '2025-01-01' },
 ];
 
 const INITIAL_QUIZ: QuizResponse[] = [
@@ -581,13 +581,111 @@ export async function fetchUsers(): Promise<User[]> {
   const db = await getDbPool();
   if (db) {
     try {
-      const [rows] = await db.query('SELECT * FROM users ORDER BY id ASC');
+      const [rows] = await db.query(`
+        SELECT u.id, u.email, u.full_name, u.zipcode, u.address, u.created_at, COALESCE(ur.role, 'customer') as role 
+        FROM users u 
+        LEFT JOIN user_roles ur ON u.id = ur.user_id 
+        ORDER BY u.id DESC
+      `);
       return rows as User[];
     } catch (err) {
       console.error('MySQL Query Error (fetchUsers):', err);
     }
   }
-  return memoryDb.users as User[];
+  return [...memoryDb.users].reverse() as User[];
+}
+
+export async function findUserByEmail(email: string): Promise<(User & { password?: string; password_hash?: string }) | null> {
+  const cleanEmail = email.trim().toLowerCase();
+  const db = await getDbPool();
+  if (db) {
+    try {
+      const [rows] = await db.query(
+        `SELECT u.*, ur.role 
+         FROM users u 
+         LEFT JOIN user_roles ur ON u.id = ur.user_id 
+         WHERE LOWER(u.email) = ? 
+         LIMIT 1`,
+        [cleanEmail]
+      );
+      const userList = rows as (User & { password_hash?: string; password?: string })[];
+      if (userList.length > 0) {
+        return userList[0];
+      }
+    } catch (err) {
+      console.error('MySQL Query Error (findUserByEmail):', err);
+    }
+  }
+
+  const user = (memoryDb.users as (User & { password?: string; password_hash?: string })[]).find(
+    (u) => u.email.toLowerCase() === cleanEmail
+  );
+  return user || null;
+}
+
+export async function saveUser(userData: {
+  email: string;
+  password: string;
+  full_name: string;
+  address?: string;
+  zipcode?: string;
+  role?: 'customer' | 'farmer' | 'admin';
+}): Promise<User> {
+  const cleanEmail = userData.email.trim().toLowerCase();
+  const existing = await findUserByEmail(cleanEmail);
+  if (existing) {
+    throw new Error('An account with this email already exists');
+  }
+
+  const role = userData.role || 'customer';
+  const zipcode = userData.zipcode || '75500';
+  const db = await getDbPool();
+  if (db) {
+    try {
+      const [result] = await db.query(
+        'INSERT INTO users (email, password_hash, full_name, address, zipcode) VALUES (?, ?, ?, ?, ?)',
+        [cleanEmail, userData.password, userData.full_name, userData.address || '', zipcode]
+      );
+      const insertId = (result as { insertId: number }).insertId;
+      try {
+        await db.query('INSERT INTO user_roles (user_id, role) VALUES (?, ?)', [insertId, role]);
+      } catch {
+        // ignore user_roles error if table missing
+      }
+
+      return {
+        id: insertId,
+        email: cleanEmail,
+        full_name: userData.full_name,
+        address: userData.address || '',
+        zipcode,
+        role
+      };
+    } catch (err) {
+      console.error('MySQL Query Error (saveUser):', err);
+    }
+  }
+
+  const newId = memoryDb.users.length + 1;
+  const newUser: User & { password?: string; password_hash?: string } = {
+    id: newId,
+    email: cleanEmail,
+    password: userData.password,
+    password_hash: userData.password,
+    full_name: userData.full_name,
+    address: userData.address || 'Clifton, Karachi',
+    role,
+    created_at: new Date().toISOString()
+  };
+  memoryDb.users.push(newUser);
+
+  return {
+    id: newUser.id,
+    email: newUser.email,
+    full_name: newUser.full_name,
+    address: newUser.address,
+    role: newUser.role
+  };
 }
 
 export async function deleteUser(id: number): Promise<boolean> {

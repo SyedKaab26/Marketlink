@@ -110,6 +110,54 @@ export default function AdminDashboardSuite() {
 
   const [viewingOrderDetails, setViewingOrderDetails] = useState<Order | null>(null);
 
+  const [showUserModal, setShowUserModal] = useState(false);
+  const [newUserName, setNewUserName] = useState('');
+  const [newUserEmail, setNewUserEmail] = useState('');
+  const [newUserPassword, setNewUserPassword] = useState('password123');
+  const [newUserLocation, setNewUserLocation] = useState('');
+  const [newUserRole, setNewUserRole] = useState<'customer' | 'farmer' | 'admin'>('customer');
+
+  const openAddUserModal = () => {
+    setNewUserName('');
+    setNewUserEmail('');
+    setNewUserPassword('password123');
+    setNewUserLocation('');
+    setNewUserRole('customer');
+    setShowUserModal(true);
+  };
+
+  const handleSaveUser = async (e: FormEvent) => {
+    e.preventDefault();
+    if (!newUserName.trim() || !newUserEmail.trim()) {
+      setNotice('Please enter full name and email address.');
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: newUserEmail.trim(),
+          password: newUserPassword,
+          full_name: newUserName.trim(),
+          address: newUserLocation.trim(),
+          role: newUserRole
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        setNotice(`Account for "${newUserName}" registered successfully.`);
+        setShowUserModal(false);
+        fetchInitialData();
+      } else {
+        setNotice(data.error || 'Failed to create user account.');
+      }
+    } catch {
+      setNotice('Failed to connect to server.');
+    }
+  };
+
   // Check auth cookie / session on load
   useEffect(() => {
     const savedAuth = localStorage.getItem('marketlink_admin_auth');
@@ -613,10 +661,13 @@ export default function AdminDashboardSuite() {
             </button>
 
             <button
-              onClick={() => { setActiveTab('customers'); setMobileMenuOpen(false); }}
-              className={`w-full flex items-center gap-3 px-3.5 py-3 rounded-2xl font-bold text-sm transition ${activeTab === 'customers' ? 'bg-[#E06D3B] text-white shadow-md' : 'text-[#A3B899] hover:bg-[#2D543F] hover:text-white'}`}
+              onClick={() => { setActiveTab('customers'); fetchInitialData(); setMobileMenuOpen(false); }}
+              className={`w-full flex items-center justify-between px-3.5 py-3 rounded-2xl font-bold text-sm transition ${activeTab === 'customers' ? 'bg-[#E06D3B] text-white shadow-md' : 'text-[#A3B899] hover:bg-[#2D543F] hover:text-white'}`}
             >
-              <Users className="w-4 h-4" /> Customers & Users
+              <div className="flex items-center gap-3">
+                <Users className="w-4 h-4" /> Customers & Users
+              </div>
+              <span className="px-2 py-0.5 rounded-full text-[10px] bg-emerald-500/20 text-emerald-300">{users.length}</span>
             </button>
 
             <button
@@ -1209,7 +1260,15 @@ export default function AdminDashboardSuite() {
                 <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8B7355]">User Directory</p>
                 <h1 className="font-serif text-3xl font-bold text-[#1D3E2E]">Registered Accounts</h1>
               </div>
-              <span className="text-xs font-bold text-[#8B7355]">{users.length} Users Total</span>
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-[#8B7355]">{users.length} Users Total</span>
+                <button
+                  onClick={openAddUserModal}
+                  className="inline-flex items-center gap-2 rounded-full bg-[#1D3E2E] px-4 py-2 text-xs font-bold text-white shadow-sm transition hover:bg-[#E06D3B]"
+                >
+                  <Plus className="w-4 h-4" /> Register New Account
+                </button>
+              </div>
             </div>
 
             {/* Search Bar */}
@@ -1697,6 +1756,98 @@ export default function AdminDashboardSuite() {
                 Close
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD REGISTERED USER */}
+      {showUserModal && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-[32px] max-w-md w-full p-6 shadow-2xl space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[#E8E2D5]">
+              <h2 className="font-serif font-bold text-xl text-[#1D3E2E]">Register New Account</h2>
+              <button onClick={() => setShowUserModal(false)} className="text-[#8B7355] hover:text-[#1D3E2E]">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveUser} className="space-y-4 text-xs">
+              <div>
+                <label className="block font-bold text-[#1D3E2E] uppercase mb-1">Full Name *</label>
+                <input
+                  type="text"
+                  required
+                  value={newUserName}
+                  onChange={e => setNewUserName(e.target.value)}
+                  placeholder="e.g. Tariq Mahmood"
+                  className="w-full rounded-xl bg-[#F9F6F0] border border-[#E8E2D5] px-3.5 py-2.5 text-xs text-[#1D3E2E] focus:outline-none focus:border-[#E06D3B]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#1D3E2E] uppercase mb-1">Email Address *</label>
+                <input
+                  type="email"
+                  required
+                  value={newUserEmail}
+                  onChange={e => setNewUserEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  className="w-full rounded-xl bg-[#F9F6F0] border border-[#E8E2D5] px-3.5 py-2.5 text-xs text-[#1D3E2E] focus:outline-none focus:border-[#E06D3B]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#1D3E2E] uppercase mb-1">Password</label>
+                <input
+                  type="password"
+                  required
+                  value={newUserPassword}
+                  onChange={e => setNewUserPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full rounded-xl bg-[#F9F6F0] border border-[#E8E2D5] px-3.5 py-2.5 text-xs text-[#1D3E2E] focus:outline-none focus:border-[#E06D3B]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#1D3E2E] uppercase mb-1">Location / Address</label>
+                <input
+                  type="text"
+                  value={newUserLocation}
+                  onChange={e => setNewUserLocation(e.target.value)}
+                  placeholder="e.g. DHA Phase 5, Lahore"
+                  className="w-full rounded-xl bg-[#F9F6F0] border border-[#E8E2D5] px-3.5 py-2.5 text-xs text-[#1D3E2E] focus:outline-none focus:border-[#E06D3B]"
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#1D3E2E] uppercase mb-1">Account Role</label>
+                <select
+                  value={newUserRole}
+                  onChange={e => setNewUserRole(e.target.value as any)}
+                  className="w-full rounded-xl bg-[#F9F6F0] border border-[#E8E2D5] px-3.5 py-2.5 text-xs text-[#1D3E2E] focus:outline-none"
+                >
+                  <option value="customer">Customer</option>
+                  <option value="farmer">Farmer / Producer</option>
+                  <option value="admin">Admin</option>
+                </select>
+              </div>
+
+              <div className="pt-3 flex justify-end gap-2 border-t border-[#E8E2D5]">
+                <button
+                  type="button"
+                  onClick={() => setShowUserModal(false)}
+                  className="px-4 py-2.5 rounded-xl border border-[#D5CCBA] font-bold text-[#8B7355]"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  className="px-5 py-2.5 rounded-xl bg-[#1D3E2E] text-white font-bold hover:bg-[#E06D3B] transition"
+                >
+                  Create Account
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

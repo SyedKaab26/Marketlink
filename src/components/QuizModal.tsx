@@ -52,6 +52,9 @@ export default function QuizModal({ isOpen, onClose, onComplete }: QuizModalProp
     };
 
     try {
+      if (typeof window !== 'undefined') {
+        window.localStorage.setItem('marketlink_quiz_prefs', JSON.stringify(quizPayload));
+      }
       await fetch('/api/quiz', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

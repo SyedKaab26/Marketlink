@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import 'leaflet/dist/leaflet.css';
 import type { Map as LeafletMap } from 'leaflet';
 import Header from '@/components/Header';
@@ -33,7 +34,8 @@ import {
   Wheat,
 } from 'lucide-react';
 
-export default function AboutPage() {
+export default function HomePage() {
+  const router = useRouter();
   const { cartItems, totalCartCount } = useCart();
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
@@ -230,8 +232,7 @@ export default function AboutPage() {
   };
 
   const handleQuizComplete = (quizData: QuizResponse) => {
-    alert(`MarketLink cart initialized for ZIP ${quizData.zipcode}! Redirecting to product selection...`);
-    window.location.href = '/shop';
+    router.push('/shop');
   };
   useEffect(() => {
     if (!mapRef.current || mapInstanceRef.current) return;

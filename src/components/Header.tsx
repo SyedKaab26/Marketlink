@@ -4,7 +4,7 @@ import React, { FormEvent, useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ChevronDown, Home, LogIn, LogOut, Menu, Search, ShoppingBag, Store, User as UserIcon, X } from 'lucide-react';
+import { ChevronDown, Home, LogIn, LogOut, Menu, Search, ShoppingBag, Sparkles, Store, User as UserIcon, X } from 'lucide-react';
 import { Category, Product } from '@/lib/types';
 
 type HeaderUser = { full_name?: string; role?: 'customer' | 'farmer' | 'admin' } | null;
@@ -55,7 +55,7 @@ const categoryMenu = [
   },
 ];
 
-export default function Header({ cartCount, onOpenCart, onOpenAuth, user, onLogout }: HeaderProps) {
+export default function Header({ cartCount, onOpenCart, onOpenQuiz, onOpenAuth, user, onLogout }: HeaderProps) {
   const router = useRouter();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -291,6 +291,16 @@ export default function Header({ cartCount, onOpenCart, onOpenAuth, user, onLogo
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">
+          {onOpenQuiz && (
+            <button
+              onClick={onOpenQuiz}
+              className="hidden items-center gap-1.5 rounded-full bg-[#FFF0E8] border border-[#E06D3B]/30 px-3 py-1.5 text-xs font-bold text-[#E06D3B] transition hover:bg-[#FFE3D4] sm:flex"
+              title="Personalize produce box with your dietary preferences"
+            >
+              <Sparkles className="h-3.5 w-3.5 text-[#E06D3B]" />
+              <span>Diet Quiz</span>
+            </button>
+          )}
           <Link href="/#markets" onClick={handleMarketClick} className="hidden items-center gap-1.5 rounded-lg px-2 py-2 text-xs font-bold text-[#2C3E35] transition-colors hover:bg-[#FFF0E8] hover:text-[#E06D3B] sm:flex lg:hidden"><Store className="h-4 w-4" />Market</Link>
           <button onClick={() => router.push('/shop')} className="hidden rounded-full p-2 text-[#1D3E2E] transition hover:bg-[#FFF0E8] hover:text-[#E06D3B] md:flex" aria-label="Browse products" title="Browse products"><Search className="h-5 w-5" /></button>
           <button onClick={onOpenCart} className="relative rounded-full p-2 text-[#1D3E2E] transition hover:bg-[#FFF0E8] hover:text-[#E06D3B]" aria-label="Open shopping cart" title="Cart"><ShoppingBag className="h-5 w-5" />{cartCount > 0 && <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[#E06D3B] text-[10px] font-bold text-white">{cartCount}</span>}</button>
@@ -319,6 +329,9 @@ export default function Header({ cartCount, onOpenCart, onOpenAuth, user, onLogo
         <form onSubmit={handleSearch} className="relative mb-3 lg:hidden"><Search className="absolute left-3 top-3 h-4 w-4 text-[#8B7355]" /><input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} placeholder="Search products, farmers, or markets" className="w-full rounded-xl border border-[#D5CCBA] bg-white py-2.5 pl-9 pr-3 text-sm outline-none focus:border-[#E06D3B]" /></form>
         <nav className="grid gap-1 sm:grid-cols-2" aria-label="Mobile navigation">
           {primaryLinks.map(({ href, label, icon: Icon }) => <Link key={label} href={href} onClick={label === 'Market' ? handleMarketClick : () => setMobileMenuOpen(false)} className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-bold text-[#1D3E2E] hover:bg-[#E8E0D0]">{Icon && <Icon className="h-4 w-4 text-[#E06D3B]" />}{label}</Link>)}
+          {onOpenQuiz && (
+            <button onClick={() => { setMobileMenuOpen(false); onOpenQuiz(); }} className="flex items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm font-bold text-[#E06D3B] hover:bg-[#E8E0D0]"><Sparkles className="h-4 w-4 text-[#E06D3B]" /> Personalize Diet Quiz</button>
+          )}
           {user ? (
             <>
               {user.role === 'farmer' && (

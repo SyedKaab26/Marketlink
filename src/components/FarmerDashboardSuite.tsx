@@ -49,6 +49,7 @@ import {
 import type { Product, Producer, Category, Order, OrderItem } from '@/lib/types';
 import { INITIAL_CATEGORIES } from '@/lib/data';
 import { resolveProductImage } from '@/lib/product-helpers';
+import { getStoredUser } from '@/lib/auth';
 
 type FarmerTabType =
   | 'overview'
@@ -252,8 +253,12 @@ export default function FarmerDashboardSuite() {
   // Check auth session
   useEffect(() => {
     const savedAuth = localStorage.getItem('marketlink_farmer_auth');
-    if (savedAuth === 'true') {
+    const storedUser = getStoredUser();
+    if (savedAuth === 'true' || storedUser?.role === 'farmer' || storedUser?.role === 'admin') {
       setIsAuthenticated(true);
+      if (savedAuth !== 'true') {
+        localStorage.setItem('marketlink_farmer_auth', 'true');
+      }
     }
     fetchInitialData();
   }, []);

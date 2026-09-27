@@ -7,6 +7,7 @@ import { useSearchParams } from 'next/navigation';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AuthModal from '@/components/AuthModal';
+import QuizModal from '@/components/QuizModal';
 import CartDrawer from '@/components/CartDrawer';
 import DbStatusBadge from '@/components/DbStatusBadge';
 import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
@@ -252,11 +253,83 @@ function ShopContent() {
   const [farmerPreview, setFarmerPreview] = useState<DiscoveryFarmer | null>(null);
   const [hoveredFarmer, setHoveredFarmer] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
+  const [quizOpen, setQuizOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [extraProducts, setExtraProducts] = useState<DiscoveryProduct[]>([]);
 
   useEffect(() => {
     setUser(getStoredUser());
+    
+    // Check quiz preferences in localStorage
+    try {
+      const savedQuiz = localStorage.getItem('marketlink_quiz_prefs');
+      if (savedQuiz) {
+        const parsed = JSON.parse(savedQuiz);
+        if (Array.isArray(parsed.dietary_prefs) && parsed.dietary_prefs.includes('Organic')) {
+          setFilters(prev => ({ ...prev, organic: true }));
+        }
+      }
+    } catch {}
+
+    // Fetch live products from /api/products to sync custom items
+    fetch('/api/products')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && Array.isArray(data.products)) {
+          const converted: DiscoveryProduct[] = data.products.map((p: Product) => {
+            const catMap: Record<number, DiscoveryCategory> = {
+              1: 'Organic Vegetables',
+              2: 'Fresh Fruits',
+              3: 'Dairy & Poultry',
+              4: 'Grains & Staples',
+              5: 'Seeds & Herbs',
+            };
+            return {
+              id: `api-prod-${p.id}`,
+              name: p.name,
+              slug: p.slug || p.name.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+              category: catMap[p.category_id] || 'Organic Vegetables',
+              price: p.price,
+              originalPrice: p.original_price || Math.round(p.price * 1.25),
+              unit: p.unit || 'each',
+              stock: p.stock || 20,
+              rating: (p as any).rating || 4.8,
+              reviewsCount: 14,
+              image: p.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80',
+              farmer: {
+                id: `producer-${p.producer_id || 1}`,
+                name: p.producer_name || 'Local Producer',
+                farmName: p.producer_name || 'Green Acres Farm',
+                slug: 'green-acres-farm',
+                avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=120&q=70',
+                verified: true,
+                rating: 4.9,
+                totalReviews: 85,
+                district: 'Clifton',
+                city: 'Karachi',
+                distanceKm: 5,
+                pickupAvailable: true,
+                completedOrders: 320,
+                story: 'Freshly harvested produce delivered directly from local farms.'
+              },
+              organic: (p.dietary_tags || '').toLowerCase().includes('organic'),
+              sameDayPickup: true,
+              preorderAvailable: true,
+              bulkDeal: false,
+              createdAt: new Date().toISOString().split('T')[0]
+            };
+          });
+          setExtraProducts(converted);
+        }
+      })
+      .catch(() => {});
   }, []);
+
+  const allAvailableProducts = useMemo(() => {
+    const existingIds = new Set(DISCOVERY_PRODUCTS.map(p => String(p.id)));
+    const uniqueExtra = extraProducts.filter(p => !existingIds.has(String(p.id)) && !DISCOVERY_PRODUCTS.some(dp => dp.name.toLowerCase() === p.name.toLowerCase()));
+    return [...uniqueExtra, ...DISCOVERY_PRODUCTS];
+  }, [extraProducts]);
 
   const updateFilters = (change: Partial<Filters>) => {
     setFilters((current) => ({ ...current, ...change }));
@@ -266,7 +339,7 @@ function ShopContent() {
 
   const filteredProducts = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
-    const items = DISCOVERY_PRODUCTS.filter((product) => {
+    const items = allAvailableProducts.filter((product) => {
       const searchable = `${product.name} ${product.category} ${product.farmer.name} ${product.farmer.farmName} ${product.farmer.city} ${product.farmer.district}`.toLowerCase();
       return (!normalizedSearch || searchable.includes(normalizedSearch))
         && (!filters.categories.length || filters.categories.includes(product.category))
@@ -290,7 +363,7 @@ function ShopContent() {
       if (sort === 'nearest') return left.farmer.distanceKm - right.farmer.distanceKm;
       return Number(right.organic) - Number(left.organic) || right.rating - left.rating;
     });
-  }, [filters, search, sort]);
+  }, [filters, search, sort, allAvailableProducts]);
 
   const pageCount = Math.max(1, Math.ceil(filteredProducts.length / pageSize));
   const visibleProducts = filteredProducts.slice((page - 1) * pageSize, page * pageSize);
@@ -369,7 +442,7 @@ function ShopContent() {
 
   return (
     <div className="min-h-screen bg-[#F5F7F4] text-[#24382B]">
-      <Header cartCount={totalCartCount} onOpenCart={() => setBasketOpen(true)} onOpenQuiz={() => undefined} onOpenAuth={() => setAuthOpen(true)} onLogout={() => {
+      <Header cartCount={totalCartCount} onOpenCart={() => setBasketOpen(true)} onOpenQuiz={() => setQuizOpen(true)} onOpenAuth={() => setAuthOpen(true)} onLogout={() => {
         setUser(null);
         clearStoredUser();
       }} user={user} />
@@ -467,6 +540,7 @@ function ShopContent() {
         setUser(nextUser);
         setStoredUser(nextUser);
       }} />
+      <QuizModal isOpen={quizOpen} onClose={() => setQuizOpen(false)} onComplete={() => setQuizOpen(false)} />
     </div>
   );
 }

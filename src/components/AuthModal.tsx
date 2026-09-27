@@ -45,7 +45,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     setError('');
 
     try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/login';
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
       const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
