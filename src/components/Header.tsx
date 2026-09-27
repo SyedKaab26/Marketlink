@@ -22,7 +22,6 @@ const primaryLinks = [
   { href: '/', label: 'Home', icon: Home },
   { href: '/#markets', label: 'Market', icon: Store },
   { href: '/shop', label: 'Products & Categories' },
-  { href: '/producers', label: 'Farmers' },
   { href: '/about', label: 'About Us' },
   { href: '/contact', label: 'Contact Us' }
 ];

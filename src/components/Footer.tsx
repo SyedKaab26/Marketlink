@@ -2,7 +2,8 @@
 
 import React from 'react';
 import Link from 'next/link';
-import { Leaf, Mail, MapPin } from 'lucide-react';
+import Image from 'next/image';
+import { Mail, MapPin } from 'lucide-react';
 
 export default function Footer() {
   return (
@@ -15,8 +16,8 @@ export default function Footer() {
           {/* Brand Column */}
           <div className="md:col-span-2 space-y-4">
             <Link href="/" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-full bg-[#E06D3B] flex items-center justify-center text-white transition-transform group-hover:scale-105">
-                <Leaf className="w-5 h-5 fill-current" />
+              <div className="w-12 h-12 flex items-center justify-center overflow-hidden transition-transform group-hover:scale-105">
+                <Image src="/logo.png" alt="MarketLink logo" width={48} height={48} className="h-full w-full object-contain" />
               </div>
               <div className="flex flex-col">
                 <span className="font-serif text-2xl font-bold tracking-tight text-white">
