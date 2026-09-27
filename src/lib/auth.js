@@ -1,2 +1,2 @@
-export { getStoredUser, setStoredUser, clearStoredUser } from './auth';
+export { getStoredUser, setStoredUser, clearStoredUser } from './auth.ts';
 
