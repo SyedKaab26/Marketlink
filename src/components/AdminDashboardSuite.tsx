@@ -1090,6 +1090,9 @@ export default function AdminDashboardSuite() {
                                 <img
                                   src={resolveProductImage(product.image_url)}
                                   alt={product.name}
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
+                                  }}
                                   className="w-10 h-10 rounded-xl object-cover border border-[#E8E2D5] shrink-0"
                                 />
                                 <div>
@@ -1182,6 +1185,9 @@ export default function AdminDashboardSuite() {
                       <img
                         src={producer.image_url || 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=400&q=80'}
                         alt={producer.name}
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=400&q=80';
+                        }}
                         className="w-14 h-14 rounded-2xl object-cover border border-[#E8E2D5]"
                       />
                       <div>
@@ -1548,7 +1554,7 @@ export default function AdminDashboardSuite() {
                   value={productImageData}
                   onChange={e => setProductImageData(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] font-semibold text-[#1D3E2E]"
-                  placeholder="https://images.unsplash.com/..."
+                  placeholder="https://images.unsplash.com/photo-1542838132-92c53300491e"
                 />
               </div>
 

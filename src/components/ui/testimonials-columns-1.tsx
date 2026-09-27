@@ -43,6 +43,9 @@ export const TestimonialsColumn = (props: {
                       height={40}
                       src={image}
                       alt={name}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80';
+                      }}
                       className="h-10 w-10 rounded-full object-cover border border-[#E0D8C8]"
                     />
                     <div className="flex flex-col">

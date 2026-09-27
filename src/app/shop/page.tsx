@@ -53,7 +53,7 @@ const currency = (amount: number) => `Rs. ${Number(amount || 0).toLocaleString('
 const cities = [...new Set(DISCOVERY_PRODUCTS.map((product) => product.farmer.city))].sort();
 const districts = [...new Set(DISCOVERY_PRODUCTS.map((product) => product.farmer.district))].sort();
 const farmerList = [...new Map(DISCOVERY_PRODUCTS.map((product) => [product.farmer.id, product.farmer])).values()];
-const pageSize = 9;
+const pageSize = 12;
 
 interface FilterSidebarProps {
   filters: Filters;

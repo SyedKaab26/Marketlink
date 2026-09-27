@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, ChevronLeft, ChevronRight, Film } from 'lucide-react';
+import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HeroVideoCarouselProps {
   onOpenQuiz: () => void;
@@ -199,12 +199,6 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
       <div className="relative z-20 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 w-full py-16 lg:py-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-center">
           <div className="lg:col-span-8 space-y-6 text-left">
-            {/* Top Badge */}
-            <div className="inline-flex items-center gap-2 bg-[#E06D3B]/20 border border-[#E06D3B]/40 px-3.5 py-1.5 rounded-full text-[#FF8A50] text-xs font-bold uppercase tracking-wider backdrop-blur-sm">
-              <Film className="w-3.5 h-3.5" />
-              <span>{activeSlide.badge}</span>
-            </div>
-
             <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold text-white leading-[1.1] tracking-tight drop-shadow-md">
               {activeSlide.title}{' '}
               <span className="italic font-normal text-[#FF8A50] underline decoration-[#E06D3B]/40 decoration-wavy">

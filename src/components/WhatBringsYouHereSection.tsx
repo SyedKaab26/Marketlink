@@ -244,6 +244,9 @@ export default function WhatBringsYouHereSection({
                   <img
                     src={item.imageSrc}
                     alt={item.title.replace('\n', ' ')}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=800&q=80';
+                    }}
                     className="w-full h-full object-cover object-center group-hover:scale-108 transition-transform duration-700 ease-out"
                   />
 

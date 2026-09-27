@@ -217,6 +217,9 @@ export default function AboutUsSection() {
                   alt="Fresh groceries and produce"
                   loading="lazy"
                   decoding="async"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=800&q=80';
+                  }}
                   className="w-full h-full object-cover"
                 />
                 <motion.div

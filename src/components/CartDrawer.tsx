@@ -177,6 +177,9 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
                   <img
                     src={product.image_url}
                     alt={product.name}
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
+                    }}
                     className="w-16 h-16 object-cover rounded-xl border border-[#F0EAE0]"
                   />
                   <div className="flex-1 min-w-0">

@@ -1117,6 +1117,9 @@ export default function FarmerDashboardSuite() {
                               <img
                                 src={resolveProductImage(prod.image_url)}
                                 alt={prod.name}
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
+                                }}
                                 className="w-10 h-10 rounded-lg object-cover border border-emerald-900 shrink-0"
                               />
                               <div>

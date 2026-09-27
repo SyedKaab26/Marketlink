@@ -126,6 +126,9 @@ export function ProductDropCard({ title, subtitle, items, onAddToCart }: Product
                     <img
                       src={item.imageSrc}
                       alt={item.name}
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
+                      }}
                       className="w-full h-full object-cover transition-transform duration-500 ease-out group-hover:scale-105"
                     />
                   </div>
