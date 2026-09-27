@@ -21,6 +21,11 @@ const playfairDisplay = Playfair_Display({
 export const metadata: Metadata = {
   title: 'MarketLink | Fresh groceries from Pakistan, delivered',
   description: 'A Pakistan-first online grocery store connecting you directly with growers and makers across the country.',
+  icons: {
+    icon: '/logo.png',
+    shortcut: '/logo.png',
+    apple: '/logo.png',
+  },
   openGraph: {
     title: 'MarketLink | Fresh groceries from Pakistan, delivered',
     description: 'Shop fresh groceries from independent farms and producers across Pakistan, delivered to your door.',
