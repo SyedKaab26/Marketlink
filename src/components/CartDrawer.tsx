@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Minus, ShoppingBag, Truck, CheckCircle2, Loader2, Sparkles, Banknote, ShieldCheck, ArrowRight, Lock, LogIn, AlertCircle, MapPin } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { X, Plus, Minus, ShoppingBag, Truck, CheckCircle2, Loader2, Sparkles, Banknote, ShieldCheck, ArrowRight, Lock, LogIn, AlertCircle, MapPin, Tag, Check, Percent } from 'lucide-react';
 import { CartItem, User } from '@/lib/types';
 import { getStoredUser } from '@/lib/auth';
 
@@ -15,6 +16,7 @@ interface CartDrawerProps {
 }
 
 export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, onClearCart, onOpenAuth }: CartDrawerProps) {
+  const router = useRouter();
   const [ordering, setOrdering] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -22,6 +24,12 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
   const [deliveryCity, setDeliveryCity] = useState('Karachi');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [locationError, setLocationError] = useState(false);
+
+  // Coupon state
+  const [couponInput, setCouponInput] = useState('');
+  const [appliedCoupon, setAppliedCoupon] = useState<string | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  const [couponSuccess, setCouponSuccess] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -52,8 +60,32 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
   if (!isOpen) return null;
 
   const subtotal = items.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
+  const discountAmount = appliedCoupon === 'MARKETLINK2GO' ? Math.round(subtotal * 0.20) : 0;
+  const discountedSubtotal = Math.max(0, subtotal - discountAmount);
   const deliveryFee = subtotal > 1500 || subtotal === 0 ? 0 : 150;
-  const total = subtotal + deliveryFee;
+  const total = discountedSubtotal + deliveryFee;
+
+  const handleApplyCoupon = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+
+    if (code === 'MARKETLINK2GO') {
+      setAppliedCoupon('MARKETLINK2GO');
+      setCouponSuccess("Coupon 'MARKETLINK2GO' applied! 20% Discount Activated 🎉");
+      setCouponError(null);
+    } else {
+      setCouponError("Invalid promo code. Use 'MARKETLINK2GO' for 20% off!");
+      setCouponSuccess(null);
+    }
+  };
+
+  const handleRemoveCoupon = () => {
+    setAppliedCoupon(null);
+    setCouponSuccess(null);
+    setCouponError(null);
+    setCouponInput('');
+  };
 
   const handleCheckout = async () => {
     const user = getStoredUser() || currentUser;
@@ -77,6 +109,9 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           items: items.map(i => ({ id: i.product.id, name: i.product.name, price: i.product.price, qty: i.quantity })),
+          subtotal,
+          discount: discountAmount,
+          coupon_code: appliedCoupon,
           total,
           payment_method: 'Cash on Delivery',
           deliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
@@ -86,7 +121,11 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
       });
       const data = await res.json();
       if (data.success) {
-        setOrderSuccess(`Order #${data.orderId || 'MK-8842'} Confirmed via Cash on Delivery! Delivery to: ${deliveryAddress.trim()}, ${deliveryCity}. Total Rs. ${total.toLocaleString('en-PK')} to be paid upon arrival.`);
+        const discountNote = discountAmount > 0 ? ` (Includes 20% MARKETLINK2GO discount of Rs. ${discountAmount.toLocaleString('en-PK')}!)` : '';
+        setOrderSuccess(`Order #${data.orderId || 'MK-8842'} Confirmed via Cash on Delivery! Delivery to: ${deliveryAddress.trim()}, ${deliveryCity}. Total Rs. ${total.toLocaleString('en-PK')} to be paid upon arrival.${discountNote}`);
+        setAppliedCoupon(null);
+        setCouponSuccess(null);
+        setCouponInput('');
         onClearCart();
       } else {
         setAuthError(data.error || 'Failed to place order. Please check your login.');
@@ -149,6 +188,7 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
                   onClick={() => {
                     setOrderSuccess(null);
                     onClose();
+                    router.push('/shop');
                   }}
                   className="bg-[#1D3E2E] text-white px-5 py-2.5 rounded-full text-xs font-bold shadow hover:bg-[#142D21] transition-all"
                 >
@@ -161,8 +201,11 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
                 <p className="font-serif text-lg font-bold text-[#1D3E2E]">Your cart is empty</p>
                 <p className="text-xs">Add fresh farm produce, fruits, vegetables, honey & dairy to your cart.</p>
                 <button
-                  onClick={onClose}
-                  className="mt-4 inline-flex items-center gap-2 bg-[#E06D3B] hover:bg-[#c85a29] text-white px-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-md"
+                  onClick={() => {
+                    onClose();
+                    router.push('/shop');
+                  }}
+                  className="mt-4 inline-flex items-center gap-2 bg-[#E06D3B] hover:bg-[#c85a29] text-white px-6 py-2.5 rounded-full text-xs font-bold transition-all shadow-md hover:scale-105 active:scale-95 cursor-pointer"
                 >
                   <span>Browse Products & Start Shopping</span>
                   <ArrowRight className="w-4 h-4" />
@@ -172,7 +215,7 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
               items.map(({ product, quantity }) => (
                 <div
                   key={product.id}
-                  className="flex items-center gap-3 p-3.5 bg-white rounded-2xl border border-[#E5DEC9] shadow-sm"
+                  className="flex items-center gap-3 p-3.5 bg-white rounded-2xl border border-[#E5DEC9] shadow-sm hover:border-[#E06D3B]/40 transition-colors"
                 >
                   <img
                     src={product.image_url}
@@ -180,10 +223,22 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
                     onError={(e) => {
                       (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=600&q=80';
                     }}
-                    className="w-16 h-16 object-cover rounded-xl border border-[#F0EAE0]"
+                    className="w-16 h-16 object-cover rounded-xl border border-[#F0EAE0] cursor-pointer"
+                    onClick={() => {
+                      onClose();
+                      router.push(`/shop?search=${encodeURIComponent(product.name)}`);
+                    }}
                   />
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-bold text-sm text-[#1D3E2E] truncate">{product.name}</h4>
+                    <h4 
+                      className="font-bold text-sm text-[#1D3E2E] truncate cursor-pointer hover:text-[#E06D3B] transition-colors"
+                      onClick={() => {
+                        onClose();
+                        router.push(`/shop?search=${encodeURIComponent(product.name)}`);
+                      }}
+                    >
+                      {product.name}
+                    </h4>
                     <p className="text-xs text-[#8B7355] truncate">{product.producer_name || 'Local Producer'}</p>
                     <p className="font-bold text-sm text-[#E06D3B] mt-1">
                       Rs. {(product.price * quantity).toLocaleString('en-PK')}
@@ -306,6 +361,65 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
                 </div>
               )}
 
+              {/* Coupon / Promo Code Input Section */}
+              <div className="p-3 bg-[#F4EFE6] border border-[#E2DACB] rounded-2xl space-y-2">
+                <div className="flex items-center gap-1.5 text-xs font-bold text-[#1D3E2E]">
+                  <Tag className="w-4 h-4 text-[#E06D3B]" />
+                  <span>Promo / Coupon Code</span>
+                </div>
+
+                {appliedCoupon ? (
+                  <div className="flex items-center justify-between bg-emerald-50 border border-emerald-300 p-2.5 rounded-xl text-xs">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <div>
+                        <span className="font-extrabold text-emerald-900">{appliedCoupon}</span>
+                        <span className="ml-1 text-[11px] text-emerald-700 font-bold">(20% Discount Active)</span>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleRemoveCoupon}
+                      className="text-xs font-bold text-red-600 hover:text-red-800 underline ml-2"
+                    >
+                      Remove
+                    </button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleApplyCoupon} className="flex gap-2">
+                    <input
+                      type="text"
+                      value={couponInput}
+                      onChange={(e) => {
+                        setCouponInput(e.target.value);
+                        setCouponError(null);
+                      }}
+                      placeholder="Enter promo code"
+                      className="flex-1 text-xs px-3 py-2 rounded-xl bg-white border border-[#D5CCBA] text-[#1D3E2E] uppercase font-bold focus:outline-none focus:ring-2 focus:ring-[#E06D3B]"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-[#1D3E2E] hover:bg-[#142D21] text-white text-xs font-bold px-4 py-2 rounded-xl transition-all shadow-sm"
+                    >
+                      Apply
+                    </button>
+                  </form>
+                )}
+
+                {couponSuccess && (
+                  <p className="text-[11px] text-emerald-700 font-bold flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                    <span>{couponSuccess}</span>
+                  </p>
+                )}
+                {couponError && (
+                  <p className="text-[11px] text-red-600 font-medium flex items-center gap-1">
+                    <AlertCircle className="w-3.5 h-3.5 text-red-500 shrink-0" />
+                    <span>{couponError}</span>
+                  </p>
+                )}
+              </div>
+
               {authError && (
                 <div className="p-3 bg-red-50 border border-red-200 rounded-2xl flex items-center gap-2 text-red-800 text-xs font-medium">
                   <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
@@ -318,6 +432,15 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
                   <span>Subtotal</span>
                   <span className="font-bold text-[#1D3E2E]">Rs. {subtotal.toLocaleString('en-PK')}</span>
                 </div>
+                {discountAmount > 0 && (
+                  <div className="flex justify-between text-emerald-700 font-bold bg-emerald-50 border border-emerald-200 px-2.5 py-1 rounded-lg">
+                    <span className="flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                      Coupon Discount (20% OFF MARKETLINK2GO)
+                    </span>
+                    <span>- Rs. {discountAmount.toLocaleString('en-PK')}</span>
+                  </div>
+                )}
                 <div className="flex justify-between">
                   <span>Delivery Fee</span>
                   <span className="font-bold text-[#1D3E2E]">

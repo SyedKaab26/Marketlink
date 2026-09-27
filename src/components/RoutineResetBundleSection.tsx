@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import Link from 'next/link';
 
 interface RoutineResetBundleSectionProps {
   onOpenQuiz?: () => void;
@@ -39,22 +39,21 @@ export default function RoutineResetBundleSection({
         {/* Right Column: Copy & CTA */}
         <div className="flex flex-col items-center justify-center text-center p-8 sm:p-12 lg:p-16 max-w-xl mx-auto w-full space-y-6">
           <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-normal text-[#111111] leading-[1.18] tracking-tight">
-            Make Your Own<br className="hidden sm:block" /> Organic Basket
+            Use Code For<br className="hidden sm:block" /> Discounts
           </h2>
 
           <p className="text-base sm:text-lg text-[#333333] leading-relaxed max-w-md font-sans">
             Handpick your favorite farm-fresh organic produce & kitchen essentials.{' '}
-            <strong className="font-bold text-black">Get up to 20% discount</strong> and free delivery all over Pakistan, with no auto-renewal or ongoing commitment.
+            <strong className="font-bold text-black">Use &apos;MARKETLINK2GO&apos; code for 20% discount on your order</strong> and free delivery all over Pakistan, with no auto-renewal or ongoing commitment.
           </p>
 
           <div className="pt-2">
-            <button
-              type="button"
-              onClick={onOpenQuiz}
-              className="bg-black text-white hover:bg-[#E06D3B] rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-xs font-bold uppercase tracking-widest transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 cursor-pointer"
+            <Link
+              href="/shop"
+              className="inline-block bg-black text-white hover:bg-[#E06D3B] rounded-full px-8 sm:px-10 py-3.5 sm:py-4 text-xs font-bold uppercase tracking-widest transition-all duration-200 shadow-md hover:shadow-lg active:scale-95 cursor-pointer text-center"
             >
-              MAKE MY OWN BASKET
-            </button>
+              ORDER NOW.
+            </Link>
           </div>
         </div>
       </div>

@@ -1,9 +1,5 @@
-import CarouselStacked from "@/components/ui/carousel-07";
+import { ScrollingFeatureShowcase } from "@/components/ui/interactive-scrolling-story-component";
 
-export default function Default() {
-  return (
-    <div className="w-full">
-      <CarouselStacked />
-    </div>
-  );
+export default function DemoOne() {
+  return <ScrollingFeatureShowcase />;
 }

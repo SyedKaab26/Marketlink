@@ -3,10 +3,10 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ArrowRight, Sparkles, ChevronLeft, ChevronRight } from 'lucide-react';
+import { ArrowRight, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface HeroVideoCarouselProps {
-  onOpenQuiz: () => void;
+  onOpenQuiz?: () => void;
 }
 
 const VIDEO_SLIDES = [
@@ -211,20 +211,12 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
             </p>
 
             <div className="pt-4 flex flex-col sm:flex-row items-stretch sm:items-center gap-4">
-              <button
-                onClick={onOpenQuiz}
-                className="bg-[#E06D3B] hover:bg-[#c85a29] text-white font-extrabold text-base sm:text-lg px-8 py-4 rounded-full shadow-2xl shadow-[#E06D3B]/40 transition-all transform hover:-translate-y-0.5 hover:scale-[1.02] flex items-center justify-center gap-3 border border-[#ff9e66]/40 group/quiz"
-              >
-                <span>Build your MarketLink cart</span>
-                <Sparkles className="w-5 h-5 group-hover/quiz:rotate-12 transition-transform" />
-              </button>
-
               <Link
                 href="/shop"
-                className="inline-flex items-center justify-center bg-white/10 hover:bg-white/20 text-white font-bold text-base sm:text-lg px-7 py-4 rounded-full backdrop-blur-md border border-white/25 transition-all gap-2 hover:border-white/40"
+                className="inline-flex items-center justify-center bg-[#E06D3B] hover:bg-[#c85a29] text-white font-extrabold text-base sm:text-lg px-8 py-4 rounded-full shadow-2xl shadow-[#E06D3B]/40 transition-all transform hover:-translate-y-0.5 hover:scale-[1.02] gap-2 border border-[#ff9e66]/40"
               >
                 <span>Browse products</span>
-                <ArrowRight className="w-5 h-5 text-[#FF8A50]" />
+                <ArrowRight className="w-5 h-5 text-white" />
               </Link>
             </div>
 

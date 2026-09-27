@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import Link from 'next/link';
+
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import CartDrawer from '@/components/CartDrawer';
@@ -9,11 +9,11 @@ import QuizModal from '@/components/QuizModal';
 import AuthModal from '@/components/AuthModal';
 import DbStatusBadge from '@/components/DbStatusBadge';
 import AboutUsSection from '@/components/ui/about-us-section';
-import TimelineBlock01 from '@/components/ui/timeline-01';
+import { ScrollingFeatureShowcase } from '@/components/ui/interactive-scrolling-story-component';
 import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
 import { useCart, updateCartQuantity, clearCart } from '@/lib/cart';
 import { User } from '@/lib/types';
-import { Leaf, ShieldCheck, HeartHandshake, Truck, ArrowRight, Sprout } from 'lucide-react';
+import { Leaf, ShieldCheck, HeartHandshake, Truck, Sprout } from 'lucide-react';
 
 export default function AboutPage() {
   const { cartItems, totalCartCount } = useCart();
@@ -68,16 +68,19 @@ export default function AboutPage() {
       <main className="flex-1">
 
         {/* HERO BANNER SECTION */}
-        <section className="relative bg-[#1D3E2E] text-white py-20 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#29523D]">
-          <div className="absolute inset-0 opacity-10 bg-[radial-gradient(#E06D3B_1px,transparent_1px)] [background-size:16px_16px] pointer-events-none" />
+        <section className="relative text-white py-24 sm:py-32 px-4 sm:px-6 lg:px-8 overflow-hidden border-b border-[#29523D] bg-cover bg-center bg-no-repeat bg-[url('/images/about-hero-bg.jpg')]">
+          {/* Gradient Overlay & Darkening for contrast */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#1D3E2E]/85 via-[#12281D]/80 to-[#1D3E2E]/90 backdrop-blur-[1px]" />
+          <div className="absolute inset-0 opacity-15 bg-[radial-gradient(#E06D3B_1px,transparent_1px)] [background-size:20px_20px] pointer-events-none" />
+          
           <div className="max-w-5xl mx-auto text-center relative z-10 space-y-6">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#2A523E] border border-[#37664E] text-[#E06D3B] text-xs font-bold tracking-wider uppercase">
-              <Leaf className="w-3.5 h-3.5" /> Our Mission & Journey
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#2A523E]/80 border border-[#488263]/50 text-[#E06D3B] text-xs font-bold tracking-wider uppercase backdrop-blur-md shadow-lg">
+              <Leaf className="w-3.5 h-3.5 text-[#E06D3B]" /> Our Mission & Journey
             </div>
-            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-bold text-[#F9F6F0] leading-tight">
+            <h1 className="font-serif text-4xl sm:text-5xl md:text-6xl font-extrabold text-[#F9F6F0] leading-tight drop-shadow-md">
               Connecting Pakistan’s Local Farms Directly To Your Table
             </h1>
-            <p className="text-base sm:text-lg text-[#C4D6CB] max-w-3xl mx-auto leading-relaxed">
+            <p className="text-base sm:text-lg md:text-xl text-[#DDF0E6] max-w-3xl mx-auto leading-relaxed drop-shadow-sm font-medium">
               At MarketLink, we believe fresh, organic food should be accessible to every family while empowering independent local growers who nourish our nation.
             </p>
           </div>
@@ -85,6 +88,11 @@ export default function AboutPage() {
 
         {/* MAIN ABOUT US INTERACTIVE COMPONENT */}
         <AboutUsSection />
+
+        {/* INTERACTIVE SCROLLING STORY SHOWCASE */}
+        <section className="w-full border-b border-[#29523D]">
+          <ScrollingFeatureShowcase />
+        </section>
 
         {/* OUR CORE VALUES */}
         <section className="py-20 bg-[#F4EFE6] border-y border-[#E5DEC9]">
@@ -120,34 +128,9 @@ export default function AboutPage() {
           </div>
         </section>
 
-        {/* OUR STORY TIMELINE */}
-        <TimelineBlock01 />
 
-        {/* CTA BANNER */}
-        <section className="py-16 bg-[#1D3E2E] text-white text-center px-4">
-          <div className="max-w-3xl mx-auto space-y-6">
-            <h2 className="font-serif text-3xl sm:text-4xl font-bold">
-              Ready to taste the farm-fresh difference?
-            </h2>
-            <p className="text-sm sm:text-base text-[#C4D6CB]">
-              Explore hundreds of handpicked fruits, vegetables, and artisan staples from local Pakistani farms.
-            </p>
-            <div className="pt-2 flex flex-wrap items-center justify-center gap-4">
-              <Link
-                href="/shop"
-                className="inline-flex items-center gap-2 bg-[#E06D3B] hover:bg-[#c95b2a] text-white px-7 py-3.5 rounded-full font-bold text-sm transition-all shadow-lg hover:scale-105"
-              >
-                Browse Shop Catalog <ArrowRight className="w-4 h-4" />
-              </Link>
-              <Link
-                href="/producers"
-                className="inline-flex items-center gap-2 bg-[#2A523E] hover:bg-[#34624b] text-white border border-[#37664E] px-7 py-3.5 rounded-full font-bold text-sm transition-all"
-              >
-                Meet Our Farmers
-              </Link>
-            </div>
-          </div>
-        </section>
+
+
 
       </main>
 

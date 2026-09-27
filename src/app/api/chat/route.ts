@@ -338,7 +338,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ reply, recommendedProducts, suggestedActions });
     }
 
-    // 2. DISCOUNT / CHEAPEST / DEALS QUERY
+    // 2. DISCOUNT / CHEAPEST / DEALS / COUPON QUERY
     if (
       userMsg.includes('sasta') ||
       userMsg.includes('cheap') ||
@@ -346,6 +346,10 @@ export async function POST(req: Request) {
       userMsg.includes('deal') ||
       userMsg.includes('offer') ||
       userMsg.includes('sale') ||
+      userMsg.includes('coupon') ||
+      userMsg.includes('promo') ||
+      userMsg.includes('code') ||
+      userMsg.includes('marketlink2go') ||
       userMsg.includes('under') ||
       userMsg.includes('less than') ||
       userMsg.includes('saving')
@@ -367,7 +371,8 @@ export async function POST(req: Request) {
 
       if (isUrduOrRoman) {
         reply =
-          `🏷️ **MarketLink Best Discounted Produce & Bulk Deals:**\n\nHum ne local Pakistani farmers se direct sourcing kar ke in top items par special discounts aur bulk pricing arrange ki hai:\n\n` +
+          `🎁 **SPECIAL COUPON: 20% DISCOUNT ON CART!**\n\nAap cart check out par promo code **\`MARKETLINK2GO\`** enter kar ke poore cart bill par **20% Extra Discount** hasil kar sakte hain!\n\n` +
+          `🏷️ **MarketLink Best Discounted Produce & Bulk Deals:**\n\n` +
           deals
             .map(
               (p) =>
@@ -376,10 +381,11 @@ export async function POST(req: Request) {
                 } — *Grown by ${p.farmerName} (${p.city})*`
             )
             .join('\n') +
-          `\n\nAap in par click kar ke direct cart mein add kar sakte hain!`;
+          `\n\nCart drawer mein code **MARKETLINK2GO** apply karain!`;
       } else {
         reply =
-          `🏷️ **Marco's Highlighted Deals & Special Discounts:**\n\nHere are farm-direct items currently available with discounted prices and bulk deals:\n\n` +
+          `🎁 **EXCLUSIVE PROMO CODE: 20% OFF!**\n\nUse coupon code **\`MARKETLINK2GO\`** in your cart drawer to get **20% OFF** your entire order subtotal!\n\n` +
+          `🏷️ **Marco's Highlighted Deals & Special Discounts:**\n\n` +
           deals
             .map(
               (p) =>
@@ -390,7 +396,7 @@ export async function POST(req: Request) {
             .join('\n');
       }
 
-      suggestedActions = ['View All Shop Deals', '🥦 Sabziyan Under Rs 200', '🥛 Dairy & Ghee Deals'];
+      suggestedActions = ['Apply Code MARKETLINK2GO', 'View All Shop Deals', '🥦 Sabziyan Under Rs 200', '🥛 Dairy & Ghee Deals'];
       return NextResponse.json({ reply, recommendedProducts, suggestedActions });
     }
 
