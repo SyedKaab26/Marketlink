@@ -8,9 +8,8 @@ import CartDrawer from '@/components/CartDrawer';
 import AuthModal from '@/components/AuthModal';
 import QuizModal from '@/components/QuizModal';
 import DbStatusBadge from '@/components/DbStatusBadge';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser, useStoredUser } from '@/lib/auth';
 import { useCart, updateCartQuantity, clearCart } from '@/lib/cart';
-import type { User } from '@/lib/types';
 import {
   User as UserIcon,
   Mail,
@@ -28,15 +27,10 @@ export default function ProfilePage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
+  const user = useStoredUser();
 
   const handleLogout = () => {
     clearStoredUser();
-    setUser(null);
   };
 
   return (
@@ -208,7 +202,6 @@ export default function ProfilePage() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(u) => {
-          setUser(u);
           setStoredUser(u);
         }}
       />

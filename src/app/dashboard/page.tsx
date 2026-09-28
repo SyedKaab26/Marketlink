@@ -3,27 +3,25 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import AdminDashboardSuite from '@/components/AdminDashboardSuite';
-import { getStoredUser } from '@/lib/auth';
-import type { User } from '@/lib/types';
+import { useStoredUser } from '@/lib/auth';
 import { Loader2 } from 'lucide-react';
 
 export default function DashboardPage() {
   const router = useRouter();
-  const [user, setUser] = useState<User | null>(null);
+  const user = useStoredUser();
   const [checking, setChecking] = useState(true);
 
   useEffect(() => {
-    const currentUser = getStoredUser();
-    setUser(currentUser);
-    
-    if (currentUser?.role === 'farmer') {
+    let active = true;
+    if (user?.role === 'farmer') {
       router.replace('/farmer');
-    } else if (currentUser?.role === 'customer') {
+    } else if (user?.role === 'customer') {
       router.replace('/orders');
     } else {
-      setChecking(false);
+      queueMicrotask(() => { if (active) setChecking(false); });
     }
-  }, [router]);
+    return () => { active = false; };
+  }, [router, user]);
 
   if (checking) {
     return (

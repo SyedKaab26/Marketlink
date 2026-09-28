@@ -1,7 +1,26 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useSyncExternalStore } from 'react';
 import { CartItem, Product } from './types';
 
 const CART_STORAGE_KEY = 'marketlink_cart_v1';
+const CART_UPDATED_EVENT = 'marketlink_cart_updated';
+
+function getCartSnapshot() {
+  try {
+    return window.localStorage.getItem(CART_STORAGE_KEY) || '[]';
+  } catch {
+    return '[]';
+  }
+}
+
+function subscribeToCart(listener: () => void) {
+  if (typeof window === 'undefined') return () => {};
+  window.addEventListener(CART_UPDATED_EVENT, listener);
+  window.addEventListener('storage', listener);
+  return () => {
+    window.removeEventListener(CART_UPDATED_EVENT, listener);
+    window.removeEventListener('storage', listener);
+  };
+}
 
 export function getStoredCart(): CartItem[] {
   if (typeof window === 'undefined') return [];
@@ -56,20 +75,18 @@ export function clearCart() {
 }
 
 export function useCart() {
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
-
-  useEffect(() => {
-    setCartItems(getStoredCart());
-    const handleUpdate = () => {
-      setCartItems(getStoredCart());
-    };
-    window.addEventListener('marketlink_cart_updated', handleUpdate);
-    window.addEventListener('storage', handleUpdate);
-    return () => {
-      window.removeEventListener('marketlink_cart_updated', handleUpdate);
-      window.removeEventListener('storage', handleUpdate);
-    };
-  }, []);
+  const storedCart = useSyncExternalStore(subscribeToCart, getCartSnapshot, () => '[]');
+  const cartItems = useMemo(() => {
+    try {
+      const parsed: unknown = JSON.parse(storedCart);
+      return Array.isArray(parsed) ? parsed as CartItem[] : [];
+    } catch {
+      return [];
+    }
+  }, [storedCart]);
+  const setCartItems = (items: CartItem[] | ((current: CartItem[]) => CartItem[])) => {
+    saveStoredCart(typeof items === 'function' ? items(getStoredCart()) : items);
+  };
 
   const totalCartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 

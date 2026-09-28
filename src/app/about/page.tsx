@@ -10,9 +10,8 @@ import AuthModal from '@/components/AuthModal';
 import DbStatusBadge from '@/components/DbStatusBadge';
 import AboutUsSection from '@/components/ui/about-us-section';
 import { ScrollingFeatureShowcase } from '@/components/ui/interactive-scrolling-story-component';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser, useStoredUser } from '@/lib/auth';
 import { useCart, updateCartQuantity, clearCart } from '@/lib/cart';
-import { User } from '@/lib/types';
 import { Leaf, ShieldCheck, HeartHandshake, Truck, Sprout } from 'lucide-react';
 
 export default function AboutPage() {
@@ -20,11 +19,7 @@ export default function AboutPage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
-
-  useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
+  const user = useStoredUser();
 
   const coreValues = [
     {
@@ -58,7 +53,6 @@ export default function AboutPage() {
         onOpenQuiz={() => setIsQuizOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={() => {
-          setUser(null);
           clearStoredUser();
         }}
         user={user}
@@ -160,7 +154,6 @@ export default function AboutPage() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(u) => {
-          setUser(u);
           setStoredUser(u);
         }}
       />

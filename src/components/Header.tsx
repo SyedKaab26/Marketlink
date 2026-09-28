@@ -1,6 +1,6 @@
 'use client';
 
-import React, { FormEvent, useEffect, useState } from 'react';
+import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -61,9 +61,23 @@ export default function Header({ cartCount, onOpenCart, onOpenQuiz, onOpenAuth, 
   const [categoryData, setCategoryData] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
   const [categoryLoading, setCategoryLoading] = useState(false);
   const [categoryLoaded, setCategoryLoaded] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
   const roleLabel = user?.role === 'farmer' ? 'Farmer' : user?.role === 'admin' ? 'Admin' : 'Customer';
+  const currentCategory = activeCategory ?? categoryMenu[0]?.label ?? 'Explore fresh goods';
+
+  const openCategoryMenu = () => {
+    setMenuOpen(true);
+    setActiveCategory((current) => current || categoryMenu[0]?.label || null);
+    void loadCategoryData(true);
+  };
+
+  const closeCategoryMenu = () => {
+    setMenuOpen(false);
+    setActiveCategory(null);
+  };
 
   const loadCategoryData = async (forceRefresh = false) => {
     if (!forceRefresh && (categoryLoaded || categoryLoading)) return;
@@ -92,8 +106,22 @@ export default function Header({ cartCount, onOpenCart, onOpenQuiz, onOpenAuth, 
   };
 
   useEffect(() => {
-    loadCategoryData();
+    void Promise.resolve().then(() => loadCategoryData());
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        closeCategoryMenu();
+      }
+    };
+    if (menuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [menuOpen]);
 
   const productsForCategory = (label: string) => {
     const menuCategory = categoryMenu.find((category) => category.label === label);
@@ -152,56 +180,51 @@ export default function Header({ cartCount, onOpenCart, onOpenQuiz, onOpenAuth, 
           {primaryLinks.map(({ href, label }) => label === 'Products & Categories' ? (
             <div
               key={label}
-              className="h-[76px] flex items-center"
-              onMouseEnter={() => {
-                setActiveCategory((current) => current || categoryMenu[0].label);
-                loadCategoryData(true);
-              }}
-              onMouseLeave={() => setActiveCategory(null)}
-              onFocus={() => {
-                setActiveCategory((current) => current || categoryMenu[0].label);
-                loadCategoryData(true);
-              }}
+              ref={dropdownRef}
+              className="group h-[76px] flex items-center"
+              onMouseEnter={openCategoryMenu}
+              onMouseLeave={closeCategoryMenu}
+              onFocus={openCategoryMenu}
             >
               <Link
                 href={href}
                 aria-haspopup="menu"
-                aria-expanded={activeCategory !== null}
-                className={`relative flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold transition-colors after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-[#E06D3B] after:transition-transform ${activeCategory !== null ? 'bg-[#FFF0E8] text-[#E06D3B] after:scale-x-100' : 'text-[#2C3E35] after:scale-x-0 hover:bg-[#FFF0E8] hover:text-[#E06D3B] hover:after:scale-x-100'}`}
+                aria-expanded={menuOpen}
+                onClick={(event) => {
+                  event.preventDefault();
+                  setMenuOpen((previous) => !previous);
+                  if (!activeCategory) {
+                    setActiveCategory(categoryMenu[0]?.label || null);
+                  }
+                }}
+                className={`relative flex items-center gap-1.5 whitespace-nowrap rounded-lg px-3 py-2 text-sm font-bold transition-colors after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-full after:bg-[#E06D3B] after:transition-transform ${menuOpen ? 'bg-[#FFF0E8] text-[#E06D3B] after:scale-x-100' : 'text-[#2C3E35] after:scale-x-0 hover:bg-[#FFF0E8] hover:text-[#E06D3B] hover:after:scale-x-100'}`}
               >
                 {label}
-                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${activeCategory !== null ? 'rotate-180 text-[#E06D3B]' : 'text-[#8B7355]'}`} />
+                <ChevronDown className={`h-4 w-4 transition-transform duration-200 ${menuOpen || activeCategory !== null ? 'rotate-180 text-[#E06D3B]' : 'text-[#8B7355]'}`} />
               </Link>
 
               <div
-                className={`invisible absolute left-4 right-4 sm:left-6 sm:right-6 lg:left-8 lg:right-8 top-full z-50 rounded-2xl border border-[#E8E2D5] bg-white p-3.5 opacity-0 shadow-2xl transition-all duration-200 ${
-                  activeCategory ? 'visible translate-y-0 opacity-100' : 'translate-y-2 pointer-events-none'
-                }`}
+                className={`pointer-events-none absolute left-4 right-4 sm:left-6 sm:right-6 lg:left-8 lg:right-8 top-full z-50 rounded-2xl border border-[#E8E2D5] bg-white p-3.5 opacity-0 shadow-2xl transition-all duration-200 invisible translate-y-2 group-hover:pointer-events-auto group-hover:visible group-hover:translate-y-0 group-hover:opacity-100 group-focus-within:pointer-events-auto group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 ${menuOpen ? 'visible translate-y-0 opacity-100 pointer-events-auto' : ''}`}
               >
                 <div className="grid min-h-[380px] grid-cols-[240px_1fr] overflow-hidden rounded-xl bg-[#F9F6F0]">
                   <div className="border-r border-[#E8E2D5] p-3 space-y-1 bg-[#F5F1E8]" role="menu" aria-label="Product categories">
                     <p className="px-3 py-1.5 text-[11px] font-bold uppercase tracking-wider text-[#8B7355]">Categories</p>
                     {categoryMenu.map((category) => {
-                      const count = productsForCategory(category.label).length;
-                      const isActive = activeCategory === category.label;
+                      const isActive = currentCategory === category.label;
                       return (
                         <Link
                           key={category.label}
                           href={`/shop?search=${encodeURIComponent(category.label)}`}
                           onMouseEnter={() => setActiveCategory(category.label)}
                           onFocus={() => setActiveCategory(category.label)}
-                          className={`flex items-center justify-between rounded-xl px-3.5 py-3 text-left text-sm font-bold transition-all ${
+                          onClick={closeCategoryMenu}
+                          className={`flex items-center rounded-xl px-3.5 py-3 text-left text-sm font-bold transition-all ${
                             isActive
                               ? 'bg-[#1D3E2E] text-white shadow-sm'
                               : 'text-[#2C3E35] hover:bg-[#E8E0D0] hover:text-[#1D3E2E]'
                           }`}
                         >
                           <span>{category.label}</span>
-                          <span className={`text-xs px-2.5 py-0.5 rounded-full font-semibold ${
-                            isActive ? 'bg-[#29543E] text-[#D4F0DF]' : 'bg-[#E2DACB] text-[#6E5C46]'
-                          }`}>
-                            {count > 0 ? `${count} items` : 'Browse'}
-                          </span>
                         </Link>
                       );
                     })}
@@ -211,26 +234,26 @@ export default function Header({ cartCount, onOpenCart, onOpenQuiz, onOpenAuth, 
                     <div>
                       <div className="mb-3 flex items-center justify-between border-b border-[#E8E2D5] pb-2.5">
                         <div>
-                          <h3 className="font-serif text-lg font-bold text-[#1D3E2E]">{activeCategory || 'Explore fresh goods'}</h3>
+                          <h3 className="font-serif text-lg font-bold text-[#1D3E2E]">{currentCategory}</h3>
                           <p className="text-xs text-[#8B7355]">Fresh farm produce available for immediate order</p>
                         </div>
-                        {activeCategory && (
+                        {currentCategory && (
                           <Link
-                            href={`/shop?search=${encodeURIComponent(activeCategory)}`}
+                            href={`/shop?search=${encodeURIComponent(currentCategory)}`}
                             className="flex items-center gap-1 rounded-lg bg-[#FFF0E8] px-3 py-1.5 text-xs font-bold text-[#E06D3B] transition hover:bg-[#FFE3D4]"
                           >
-                            View all in {activeCategory} &rarr;
+                            View all in {currentCategory} &rarr;
                           </Link>
                         )}
                       </div>
 
-                      {!activeCategory || categoryLoading ? (
+                      {categoryLoading && products.length === 0 ? (
                         <div className="flex h-64 items-center justify-center">
                           <p className="text-xs font-semibold text-[#8B7355]">Loading fresh products...</p>
                         </div>
-                      ) : productsForCategory(activeCategory).length > 0 ? (
+                      ) : productsForCategory(currentCategory).length > 0 ? (
                         <div className="grid grid-cols-2 gap-3.5">
-                          {productsForCategory(activeCategory).map((product) => (
+                          {productsForCategory(currentCategory).map((product) => (
                             <Link
                               key={product.id}
                               href={`/shop?search=${encodeURIComponent(product.name)}`}

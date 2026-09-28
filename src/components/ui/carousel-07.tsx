@@ -109,10 +109,13 @@ const CarouselStacked = () => {
   const total = slides.length;
 
   React.useEffect(() => {
-    setWindowWidth(window.innerWidth);
+    const initialFrame = requestAnimationFrame(() => setWindowWidth(window.innerWidth));
     const handleResize = () => setWindowWidth(window.innerWidth);
     window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
+    return () => {
+      cancelAnimationFrame(initialFrame);
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   React.useEffect(() => {

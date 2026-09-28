@@ -118,11 +118,11 @@ export default function ContactWithGlobe({
 
   useEffect(() => {
     if (userDefaultName || userDefaultEmail) {
-      setFormData((prev) => ({
+      queueMicrotask(() => setFormData((prev) => ({
         ...prev,
         name: userDefaultName || prev.name,
         email: userDefaultEmail || prev.email,
-      }));
+      })));
     }
   }, [userDefaultName, userDefaultEmail]);
 

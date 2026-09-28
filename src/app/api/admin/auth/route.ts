@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { clearAuthCookie, getAuthUser, setAuthCookie } from '@/lib/server-auth';
-import { findUserByEmail } from '@/lib/db';
+import { findUserByEmail, updateUserPasswordHash } from '@/lib/db';
+import { hashPassword, verifyPassword } from '@/lib/password';
 import type { User } from '@/lib/types';
 
 export async function GET(request: NextRequest) {
@@ -8,42 +9,38 @@ export async function GET(request: NextRequest) {
   if (user && user.role === 'admin') {
     return NextResponse.json({ success: true, user });
   }
-  const legacyAdminToken = request.cookies.get('marketlink_admin_session')?.value;
-  if (legacyAdminToken) {
-    const adminUser: User = { id: 1, email: 'admin@marketlink.pk', full_name: 'MarketLink Admin', role: 'admin' };
-    const response = NextResponse.json({ success: true, user: adminUser });
-    setAuthCookie(response, adminUser);
-    return response;
-  }
   return NextResponse.json({ success: false, error: 'Not authenticated' }, { status: 401 });
 }
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json().catch(() => ({}));
+    const body = await request.json().catch(() => ({})) as { email?: unknown; password?: unknown };
     const { email, password } = body;
 
     const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    if (!cleanEmail || typeof password !== 'string' || !password) {
+      return NextResponse.json({ success: false, error: 'Email and password required' }, { status: 400 });
+    }
     const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
     const envAdminPassword = process.env.ADMIN_PASSWORD || '';
 
     const isEnvMatch = Boolean(envAdminEmail && envAdminPassword && cleanEmail === envAdminEmail && password === envAdminPassword);
-    const isDefaultMatch = Boolean(
-      (!cleanEmail || cleanEmail === 'admin@marketlink.pk' || cleanEmail === 'admin@marketlink.com') &&
-      (!password || password === 'admin123' || password === 'admin')
-    );
 
     let dbUserMatch = false;
-    let foundUserObj: any = null;
-    if (!isEnvMatch && !isDefaultMatch && cleanEmail) {
+    let foundUserObj: (User & { password?: string; password_hash?: string }) | null = null;
+    if (!isEnvMatch) {
       const dbUser = await findUserByEmail(cleanEmail);
-      if (dbUser && dbUser.role === 'admin' && (dbUser.password === password || dbUser.password_hash === password)) {
-        dbUserMatch = true;
+      const storedPassword = dbUser?.password_hash || dbUser?.password;
+      if (dbUser && dbUser.role === 'admin' && storedPassword && await verifyPassword(password, storedPassword)) {
         foundUserObj = dbUser;
+        dbUserMatch = true;
+        if (!storedPassword.startsWith('scrypt:')) {
+          await updateUserPasswordHash(dbUser.id, await hashPassword(password));
+        }
       }
     }
 
-    if (isEnvMatch || isDefaultMatch || dbUserMatch) {
+    if (isEnvMatch || dbUserMatch) {
       const adminUser: User = foundUserObj ? {
         id: foundUserObj.id,
         email: foundUserObj.email,
@@ -65,12 +62,6 @@ export async function POST(request: NextRequest) {
         user: adminUser
       });
 
-      response.cookies.set('marketlink_admin_session', 'authenticated_admin_token_99', {
-        httpOnly: false,
-        path: '/',
-        maxAge: 60 * 60 * 24 * 7
-      });
-
       setAuthCookie(response, adminUser);
       return response;
     }
@@ -83,7 +74,6 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE() {
   const response = NextResponse.json({ success: true, message: 'Logged out successfully' });
-  response.cookies.delete('marketlink_admin_session');
   clearAuthCookie(response);
   return response;
 }

@@ -3,8 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { X, Plus, Minus, ShoppingBag, Truck, CheckCircle2, Loader2, Sparkles, Banknote, ShieldCheck, ArrowRight, Lock, LogIn, AlertCircle, MapPin, Tag, Check, Percent } from 'lucide-react';
-import { CartItem, User } from '@/lib/types';
-import { getStoredUser } from '@/lib/auth';
+import { CartItem } from '@/lib/types';
+import { useStoredUser } from '@/lib/auth';
 
 interface CartDrawerProps {
   isOpen: boolean;
@@ -20,7 +20,7 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
   const [ordering, setOrdering] = useState(false);
   const [orderSuccess, setOrderSuccess] = useState<string | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const currentUser = useStoredUser();
   const [deliveryCity, setDeliveryCity] = useState('Karachi');
   const [deliveryAddress, setDeliveryAddress] = useState('');
   const [locationError, setLocationError] = useState(false);
@@ -33,15 +33,13 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
 
   useEffect(() => {
     if (isOpen) {
-      const user = getStoredUser();
-      setCurrentUser(user);
-      if (user?.address) {
-        setDeliveryAddress(user.address);
-      }
-      setAuthError(null);
-      setLocationError(false);
+      queueMicrotask(() => {
+        setDeliveryAddress(currentUser?.address || '');
+        setAuthError(null);
+        setLocationError(false);
+      });
     }
-  }, [isOpen]);
+  }, [isOpen, currentUser?.address]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -88,7 +86,7 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
   };
 
   const handleCheckout = async () => {
-    const user = getStoredUser() || currentUser;
+    const user = currentUser;
     if (!user) {
       setAuthError('Account login is required to place an order. Please log in first.');
       return;
@@ -114,7 +112,6 @@ export default function CartDrawer({ isOpen, onClose, items, onUpdateQuantity, o
           coupon_code: appliedCoupon,
           total,
           payment_method: 'Cash on Delivery',
-          deliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
           user_id: user.id,
           shipping_address: `${deliveryAddress.trim()}, ${deliveryCity}`
         })

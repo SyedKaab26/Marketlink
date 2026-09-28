@@ -54,7 +54,7 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
   useEffect(() => {
     if (!isPlaying || videoStartedIndex !== currentIndex) return;
 
-    setProgress(0);
+    const resetFrame = requestAnimationFrame(() => setProgress(0));
     const interval = 100;
     const totalDuration = VIDEO_SLIDES[currentIndex].duration || 8000;
     const step = (interval / totalDuration) * 100;
@@ -73,6 +73,7 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
     }, totalDuration);
 
     return () => {
+      cancelAnimationFrame(resetFrame);
       clearInterval(progressTimer);
       clearTimeout(slideTimer);
     };

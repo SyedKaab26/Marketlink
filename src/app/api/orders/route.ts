@@ -5,6 +5,7 @@ import { getAuthUser } from '@/lib/server-auth';
 import type { OrderItem } from '@/lib/types';
 
 type FarmerOrderItem = OrderItem & { producer_id?: number; product_id?: number };
+type CheckoutOrderItem = OrderItem & { producer_id: number; product_id: number };
 
 export async function GET(request: NextRequest) {
   try {
@@ -55,11 +56,12 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { items, total, deliveryDate, user_id, shipping_address } = body;
+    const { items, user_id, shipping_address, coupon_code } = body;
+    const user = getAuthUser(request);
 
-    if (!user_id) {
+    if (!user || user.role !== 'customer' || Number(user_id) !== user.id) {
       return NextResponse.json(
-        { success: false, error: 'Account login is required to place an order. Please log in first.' },
+        { success: false, error: 'A matching customer login is required to place an order.' },
         { status: 401 }
       );
     }
@@ -71,15 +73,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!items || items.length === 0) {
+    if (!Array.isArray(items) || items.length === 0 || items.length > 100) {
       return NextResponse.json({ success: false, error: 'Cart items cannot be empty' }, { status: 400 });
     }
 
+    const products = await fetchProducts();
+    const orderItems: CheckoutOrderItem[] = [];
+    let subtotal = 0;
+    for (const item of items) {
+      const productId = Number(item?.id);
+      const quantity = Number(item?.qty);
+      const product = products.find((candidate) => candidate.id === productId);
+      if (!product || !Number.isSafeInteger(quantity) || quantity < 1 || quantity > 100 || (product.stock !== undefined && quantity > product.stock)) {
+        return NextResponse.json({ success: false, error: 'One or more cart items are invalid or unavailable.' }, { status: 400 });
+      }
+      orderItems.push({
+        id: product.id,
+        product_id: product.id,
+        producer_id: product.producer_id,
+        name: product.name,
+        price: product.price,
+        quantity
+      });
+      subtotal += product.price * quantity;
+    }
+
+    const discount = coupon_code === 'MARKETLINK2GO' ? Math.round(subtotal * 0.2) : 0;
+    const deliveryFee = subtotal > 1500 ? 0 : 150;
+
     const result = await saveOrder({
-      user_id,
-      total: total || 0,
-      items,
-      deliveryDate: deliveryDate || new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      user_id: user.id,
+      total: subtotal - discount + deliveryFee,
+      items: orderItems,
+      deliveryDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
       shipping_address: shipping_address.trim()
     });
 

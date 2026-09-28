@@ -86,6 +86,15 @@ function scrollParent(element: HTMLElement): HTMLElement | null {
   return null;
 }
 
+function getCharacterPositions(text: string) {
+  let offset = 0;
+  return Array.from(text, (char) => {
+    const index = offset;
+    offset += char.length;
+    return { char, index };
+  });
+}
+
 export default function GlyphPortal({
   word = "SUBLIME", focusChar, interactive = true, background, front, children, scrollLength = 2.4,
   fontFamily = DEFAULT_FONT, fontWeight = 900, annotations = false,
@@ -97,11 +106,7 @@ export default function GlyphPortal({
   const progressRef = useRef(onProgress);
   useLayoutEffect(() => { progressRef.current = onProgress; }, [onProgress]);
   const text = word.trim().normalize("NFC") || "SUBLIME";
-  let characterOffset = 0;
-  const characters = Array.from(text, (char) => {
-    const index = characterOffset; characterOffset += char.length;
-    return { char, index };
-  });
+  const characters = getCharacterPositions(text);
   const length = Number.isFinite(scrollLength) ? clamp(scrollLength, 1, 8) : 2.4;
   const weight = Number.isFinite(fontWeight) ? clamp(fontWeight, 1, 1000) : 900;
   const hasFront = front != null;
@@ -123,7 +128,6 @@ export default function GlyphPortal({
     const canvas = document.createElement("canvas");
     const context = canvas.getContext("2d", { willReadFrequently: true });
     let disposed = false, raf = 0, dirty = true, active = true, ready = false;
-    const mountedAt = performance.now();
     let browserFrameSeen = false, stalled = false;
     let W = 1, H = 1, travel = 1, startScale = 1, endScale = 1;
     let center = { x: 0, y: 0 }, target: Ink | null = null;

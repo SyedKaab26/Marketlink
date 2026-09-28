@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findUserByEmail } from '@/lib/db';
+import { findUserByEmail, updateUserPasswordHash } from '@/lib/db';
 import { getErrorMessage } from '@/lib/utils';
 import { setAuthCookie } from '@/lib/server-auth';
+import { hashPassword, verifyPassword } from '@/lib/password';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,8 +33,7 @@ export async function POST(request: NextRequest) {
           zipcode: '15201',
           subscriptionActive: true,
           role: 'admin'
-        },
-        token: 'harvie_jwt_token_sample_123456789'
+        }
       });
       setAuthCookie(response, { id: 1, email: cleanEmail, full_name: 'Admin', role: 'admin' });
       return response;
@@ -49,13 +49,16 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    // Verify password if set
+    // Verify and upgrade legacy plain-text passwords after a successful login.
     const userPassword = user.password || user.password_hash;
-    if (userPassword && userPassword !== password) {
+    if (!userPassword || !await verifyPassword(password, userPassword)) {
       return NextResponse.json({
         success: false,
         error: 'Invalid password. Please try again.'
       }, { status: 401 });
+    }
+    if (!userPassword.startsWith('scrypt:')) {
+      await updateUserPasswordHash(user.id, await hashPassword(password));
     }
 
     const authenticatedUser = {
@@ -69,8 +72,7 @@ export async function POST(request: NextRequest) {
     };
     const response = NextResponse.json({
       success: true,
-      user: authenticatedUser,
-      token: 'harvie_jwt_token_sample_123456789'
+      user: authenticatedUser
     });
     setAuthCookie(response, authenticatedUser);
     return response;

@@ -337,7 +337,7 @@ export default function ChatbotWidget() {
                         <div className="w-full pl-9 pr-2 space-y-2 mt-1">
                           <p className="text-[11px] font-bold text-[#1D3E2E] flex items-center gap-1">
                             <ShoppingBag className="w-3.5 h-3.5 text-[#E06D3B]" />
-                            Marco's Recommended Produce:
+                            Marco&apos;s Recommended Produce:
                           </p>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             {msg.products.map((p) => {

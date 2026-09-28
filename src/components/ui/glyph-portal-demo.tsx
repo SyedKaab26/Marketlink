@@ -161,7 +161,7 @@ export default function GlyphPortalDemo(props: Partial<typeof settings>) {
               <span data-sublime-category>🌿 Farm Fresh & Organic</span>
             </div>
             <p data-sublime-eyebrow>A fresh perspective on organic farming</p>
-            <p data-sublime-support>Step inside to discover Pakistan's seasonal harvest</p>
+            <p data-sublime-support>Step inside to discover Pakistan&apos;s seasonal harvest</p>
             <span data-sublime-scroll>Scroll to step inside ↓</span>
           </>
         }
@@ -174,7 +174,7 @@ export default function GlyphPortalDemo(props: Partial<typeof settings>) {
               Direct From Pakistani Farms
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl text-white font-bold leading-tight tracking-tight">
-              Directly connecting Pakistan's finest growers to your kitchen.
+              Directly connecting Pakistan&apos;s finest growers to your kitchen.
             </h2>
             <p className="text-base sm:text-lg text-emerald-100/80 leading-relaxed font-normal max-w-2xl">
               Skip storage delays. Enjoy organic produce harvested daily from orchards in Mirpurkhas, Sargodha, Potohar & the northern valleys.

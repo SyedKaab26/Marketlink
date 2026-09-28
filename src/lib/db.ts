@@ -1,6 +1,7 @@
 import { INITIAL_TESTIMONIALS } from './data';
 import { DISCOVERY_CATEGORIES, DISCOVERY_FARMER_LIST, DISCOVERY_PRODUCTS } from './discovery-data';
-import { Producer, Category, Product, Testimonial, QuizResponse, Order, User, AdminStats } from './types';
+import { Producer, Category, Product, Testimonial, QuizResponse, Order, OrderItem, User, AdminStats } from './types';
+import { hashPassword } from './password';
 
 type DbResult = [unknown, unknown];
 type DbConnection = {
@@ -16,7 +17,7 @@ type DbPool = {
   query: (sql: string, params?: unknown[]) => Promise<DbResult>;
 };
 
-// Seed initial memory DB with orders and users for seamless fallback
+// Keep demo orders and an empty user store when MySQL is unavailable.
 const INITIAL_ORDERS: Order[] = [
   {
     id: 'MK-1024',
@@ -92,14 +93,7 @@ const INITIAL_ORDERS: Order[] = [
   }
 ];
 
-const INITIAL_USERS: (User & { password?: string; password_hash?: string })[] = [
-  { id: 1, full_name: 'Ayesha Khan', email: 'ayesha.k@example.com', zipcode: '44000', address: 'Islamabad', role: 'customer', password: 'password123', password_hash: 'password123', created_at: '2026-01-15' },
-  { id: 2, full_name: 'Bilal Raza', email: 'bilal.raza@example.com', zipcode: '54000', address: 'Lahore', role: 'customer', password: 'password123', password_hash: 'password123', created_at: '2026-02-10' },
-  { id: 3, full_name: 'Sara Malik', email: 'sara.m@example.com', zipcode: '75500', address: 'Karachi', role: 'customer', password: 'password123', password_hash: 'password123', created_at: '2026-03-01' },
-  { id: 4, full_name: 'Hamza Ali', email: 'hamza.a@example.com', zipcode: '54000', address: 'Lahore', role: 'customer', password: 'password123', password_hash: 'password123', created_at: '2026-04-12' },
-  { id: 5, full_name: 'Tariq Mehmood', email: 'tariq.m@example.com', zipcode: '47000', address: 'Rawalpindi', role: 'farmer', password: 'password123', password_hash: 'password123', created_at: '2025-11-20' },
-  { id: 6, full_name: 'MarketLink Admin', email: 'admin@marketlink.com', zipcode: '44000', address: 'Headquarters', role: 'admin', password: 'admin123', password_hash: 'admin123', created_at: '2025-01-01' },
-];
+const INITIAL_USERS: (User & { password?: string; password_hash?: string })[] = [];
 
 const INITIAL_QUIZ: QuizResponse[] = [
   { id: 1, zipcode: '54000', dietary_prefs: ['Organic', 'Gluten-free'], shopping_type: 'Weekly Subscription', household_size: 3, created_at: '2026-09-20' },
@@ -626,7 +620,7 @@ export async function fetchOrders(): Promise<Order[]> {
   return memoryDb.orders as Order[];
 }
 
-export async function saveOrder(orderData: { user_id?: number; total: number; items: unknown[]; deliveryDate: string; shipping_address?: string }) {
+export async function saveOrder(orderData: { user_id?: number; total: number; items: OrderItem[]; deliveryDate: string; shipping_address?: string }) {
   const db = await getDbPool();
   if (db) {
     try {
@@ -656,7 +650,7 @@ export async function saveOrder(orderData: { user_id?: number; total: number; it
     status: 'Pending',
     delivery_date: orderData.deliveryDate,
     shipping_address: orderData.shipping_address || 'Standard MarketLink Delivery Route',
-    items_json: orderData.items as any,
+    items_json: orderData.items,
     created_at: new Date().toISOString()
   };
   memoryDb.orders.unshift(newOrder);
@@ -716,7 +710,12 @@ export async function fetchUsers(): Promise<User[]> {
       console.error('MySQL Query Error (fetchUsers):', err);
     }
   }
-  return [...memoryDb.users].reverse() as User[];
+  return [...memoryDb.users].reverse().map((user) => {
+    const safeUser: User & { password?: string; password_hash?: string } = { ...user };
+    delete safeUser.password;
+    delete safeUser.password_hash;
+    return safeUser;
+  });
 }
 
 export async function findUserByEmail(email: string): Promise<(User & { password?: string; password_hash?: string }) | null> {
@@ -763,9 +762,10 @@ export async function saveUser(userData: {
 
   const role = userData.role || 'customer';
   const zipcode = userData.zipcode || '75500';
+  const passwordHash = await hashPassword(userData.password);
   const db = await getDbPool();
   if (!db) {
-    const newId = memoryDb.users.length + 1;
+    const newId = Math.max(1000, ...memoryDb.users.map((user) => user.id + 1));
     const memUser = {
       id: newId,
       email: cleanEmail,
@@ -773,8 +773,7 @@ export async function saveUser(userData: {
       address: userData.address || '',
       zipcode,
       role,
-      password: userData.password,
-      password_hash: userData.password,
+      password_hash: passwordHash,
       created_at: new Date().toISOString()
     };
     memoryDb.users.push(memUser);
@@ -794,7 +793,7 @@ export async function saveUser(userData: {
     await connection.beginTransaction();
     const [result] = await connection.query(
       'INSERT INTO users (email, password_hash, full_name, address, zipcode) VALUES (?, ?, ?, ?, ?)',
-      [cleanEmail, userData.password, userData.full_name, userData.address || '', zipcode]
+      [cleanEmail, passwordHash, userData.full_name, userData.address || '', zipcode]
     );
     const insertId = (result as { insertId: number }).insertId;
     await connection.query('INSERT INTO user_roles (user_id, role) VALUES (?, ?)', [insertId, role]);
@@ -816,6 +815,25 @@ export async function saveUser(userData: {
     throw new Error('Could not save account to the database. Check the MySQL connection and schema.');
   } finally {
     connection?.release();
+  }
+}
+
+export async function updateUserPasswordHash(id: number, passwordHash: string): Promise<void> {
+  const db = await getDbPool();
+  if (db) {
+    try {
+      await db.query('UPDATE users SET password_hash = ? WHERE id = ?', [passwordHash, id]);
+      return;
+    } catch (err) {
+      console.error('MySQL Query Error (updateUserPasswordHash):', err);
+    }
+  }
+
+  const user = (memoryDb.users as (User & { password?: string; password_hash?: string })[])
+    .find((item) => item.id === id);
+  if (user) {
+    delete user.password;
+    user.password_hash = passwordHash;
   }
 }
 
@@ -843,9 +861,9 @@ export async function fetchQuizResponses(): Promise<QuizResponse[]> {
   if (db) {
     try {
       const [rows] = await db.query('SELECT * FROM quiz_responses ORDER BY created_at DESC');
-      return (rows as any[]).map(r => ({
-        ...r,
-        dietary_prefs: typeof r.dietary_prefs === 'string' ? JSON.parse(r.dietary_prefs) : r.dietary_prefs
+      return (rows as (Omit<QuizResponse, 'dietary_prefs'> & { dietary_prefs: string | string[] })[]).map(response => ({
+        ...response,
+        dietary_prefs: typeof response.dietary_prefs === 'string' ? JSON.parse(response.dietary_prefs) as string[] : response.dietary_prefs
       }));
     } catch (err) {
       console.error('MySQL Query Error (fetchQuizResponses):', err);

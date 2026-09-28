@@ -8,9 +8,9 @@ import CartDrawer from '@/components/CartDrawer';
 import AuthModal from '@/components/AuthModal';
 import QuizModal from '@/components/QuizModal';
 import DbStatusBadge from '@/components/DbStatusBadge';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser, useStoredUser } from '@/lib/auth';
 import { useCart, updateCartQuantity, clearCart } from '@/lib/cart';
-import type { Order, User } from '@/lib/types';
+import type { Order, OrderItem } from '@/lib/types';
 import {
   ShoppingBag,
   Package,
@@ -25,22 +25,18 @@ import {
   AlertCircle
 } from 'lucide-react';
 
+type DisplayOrderItem = OrderItem & { qty?: number };
+
 export default function OrdersPage() {
   const { cartItems, totalCartCount } = useCart();
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const user = useStoredUser();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const currentUser = getStoredUser();
-    setUser(currentUser);
-    fetchUserOrders(currentUser);
-  }, []);
-
-  const fetchUserOrders = async (currentUser: User | null) => {
+  async function fetchUserOrders(currentUser: ReturnType<typeof useStoredUser>) {
     setLoading(true);
     try {
       const res = await fetch('/api/orders');
@@ -56,13 +52,19 @@ export default function OrdersPage() {
         } else {
           setOrders([]);
         }
+      } else {
+        setOrders([]);
       }
     } catch (err) {
       console.error('Failed to load orders:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }
+
+  useEffect(() => {
+    void Promise.resolve().then(() => fetchUserOrders(user));
+  }, [user]);
 
   const getStatusBadge = (status: Order['status']) => {
     switch (status) {
@@ -102,7 +104,6 @@ export default function OrdersPage() {
         onOpenQuiz={() => setIsQuizOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={() => {
-          setUser(null);
           clearStoredUser();
         }}
         user={user}
@@ -157,7 +158,7 @@ export default function OrdersPage() {
             <ShoppingBag className="w-16 h-16 text-[#B5A893] mx-auto stroke-1" />
             <h2 className="font-serif text-2xl font-bold text-[#1D3E2E]">No Orders Found Yet</h2>
             <p className="text-sm text-[#55695E] max-w-md mx-auto">
-              You haven't placed any farm-fresh orders yet. Explore our market catalog to order organic produce directly from Pakistani farms.
+              You haven&apos;t placed any farm-fresh orders yet. Explore our market catalog to order organic produce directly from Pakistani farms.
             </p>
             <Link
               href="/shop"
@@ -170,8 +171,8 @@ export default function OrdersPage() {
         ) : (
           <div className="space-y-6">
             {orders.map((order) => {
-              const items: any[] = typeof order.items_json === 'string'
-                ? (() => { try { return JSON.parse(order.items_json); } catch { return []; } })()
+              const items: DisplayOrderItem[] = typeof order.items_json === 'string'
+                ? (() => { try { return JSON.parse(order.items_json) as DisplayOrderItem[]; } catch { return []; } })()
                 : Array.isArray(order.items_json) ? order.items_json : [];
 
               return (
@@ -212,7 +213,7 @@ export default function OrdersPage() {
                         <p className="text-xs text-[#55695E]">MarketLink Organic Bundle</p>
                       ) : (
                         <div className="space-y-2">
-                          {items.map((item: any, idx: number) => (
+                          {items.map((item: DisplayOrderItem, idx: number) => (
                             <div key={idx} className="flex items-center justify-between text-xs py-1 border-b border-[#F8F5EE] last:border-0">
                               <span className="font-semibold text-[#1D3E2E]">
                                 {item.quantity || item.qty || 1}x {item.name || item.product?.name || 'Organic Harvest Item'}
@@ -274,9 +275,7 @@ export default function OrdersPage() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(u) => {
-          setUser(u);
           setStoredUser(u);
-          fetchUserOrders(u);
         }}
       />
 

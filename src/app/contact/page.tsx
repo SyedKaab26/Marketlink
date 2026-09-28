@@ -8,9 +8,8 @@ import QuizModal from '@/components/QuizModal';
 import AuthModal from '@/components/AuthModal';
 import DbStatusBadge from '@/components/DbStatusBadge';
 import ContactWithGlobe from '@/components/ui/contact-with-globe';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser, useStoredUser } from '@/lib/auth';
 import { useCart, updateCartQuantity, clearCart } from '@/lib/cart';
-import { User } from '@/lib/types';
 import {
   HelpCircle,
   ChevronDown
@@ -21,12 +20,11 @@ export default function ContactPage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const user = useStoredUser();
 
   const [openFaq, setOpenFaq] = useState<number | null>(0);
 
   useEffect(() => {
-    setUser(getStoredUser());
     if (typeof window !== 'undefined' && (window.location.hash === '#faq' || window.location.hash === '#faqs')) {
       setTimeout(() => {
         document.getElementById('faq')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -61,7 +59,6 @@ export default function ContactPage() {
         onOpenQuiz={() => setIsQuizOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={() => {
-          setUser(null);
           clearStoredUser();
         }}
         user={user}
@@ -147,7 +144,6 @@ export default function ContactPage() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(u) => {
-          setUser(u);
           setStoredUser(u);
         }}
       />

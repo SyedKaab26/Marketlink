@@ -52,19 +52,7 @@ export function clearAuthCookie(response: NextResponse) {
 
 export function getAuthUser(request: NextRequest): SessionPayload | null {
   const token = request.cookies.get(SESSION_COOKIE)?.value;
-  if (!token) {
-    const adminToken = request.cookies.get('marketlink_admin_session')?.value;
-    if (adminToken) {
-      return {
-        id: 1,
-        email: 'admin@marketlink.pk',
-        full_name: 'MarketLink Admin',
-        role: 'admin',
-        expiresAt: Date.now() + 60 * 60 * 24 * 7 * 1000
-      };
-    }
-    return null;
-  }
+  if (!token) return null;
   const secret = sessionSecret();
   if (!secret) return null;
 
@@ -83,4 +71,4 @@ export function getAuthUser(request: NextRequest): SessionPayload | null {
   } catch {
     return null;
   }
-}
+}

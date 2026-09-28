@@ -8,9 +8,8 @@ import CartDrawer from '@/components/CartDrawer';
 import QuizModal from '@/components/QuizModal';
 import AuthModal from '@/components/AuthModal';
 import DbStatusBadge from '@/components/DbStatusBadge';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser, useStoredUser } from '@/lib/auth';
 import { useCart, updateCartQuantity, clearCart } from '@/lib/cart';
-import type { User } from '@/lib/types';
 import {
   HelpCircle,
   ShieldCheck,
@@ -27,14 +26,10 @@ export default function HelpPage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const user = useStoredUser();
 
   const [activeTab, setActiveTab] = useState<'help' | 'privacy' | 'terms'>('help');
   const [openFaq, setOpenFaq] = useState<number | null>(0);
-
-  useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
 
   const faqs = [
     {
@@ -63,7 +58,6 @@ export default function HelpPage() {
         onOpenQuiz={() => setIsQuizOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={() => {
-          setUser(null);
           clearStoredUser();
         }}
         user={user}
@@ -249,7 +243,6 @@ export default function HelpPage() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(u) => {
-          setUser(u);
           setStoredUser(u);
         }}
       />

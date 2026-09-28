@@ -21,7 +21,7 @@ import { ProductDropCard, type DropItem } from '@/components/ui/product-drop-car
 import CarouselStacked from '@/components/ui/carousel-07';
 import Testimonials from '@/components/ui/testimonials-demo';
 import { CartItem, Product, QuizResponse, User } from '@/lib/types';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser, useStoredUser } from '@/lib/auth';
 import { useCart, addToCart as addProductToCart, updateCartQuantity, clearCart } from '@/lib/cart';
 import {
   Apple,
@@ -41,12 +41,9 @@ export default function HomePage() {
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [selectedMarket, setSelectedMarket] = useState('');
-  const [user, setUser] = useState<User | null>(null);
+  const user = useStoredUser();
   const mapRef = useRef<HTMLDivElement | null>(null);
 
-  useEffect(() => {
-    setUser(getStoredUser());
-  }, []);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
 
   const marketLocations = [
@@ -64,6 +61,7 @@ export default function HomePage() {
     },
     {
       id: 'lahore',
+      name: 'Lahore Punjab Market',
       city: 'Lahore, Punjab',
       lat: 31.5204,
       lng: 74.3587,
@@ -341,7 +339,6 @@ export default function HomePage() {
         onOpenQuiz={() => setIsQuizOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={() => {
-          setUser(null);
           clearStoredUser();
         }}
         user={user}
@@ -499,7 +496,7 @@ export default function HomePage() {
               Our Best Farmers & Producers
             </h3>
             <p className="text-xs sm:text-sm text-[#55695E] mt-1 max-w-lg mx-auto">
-              Meet the dedicated growers bringing fresh organic produce directly from Pakistan's valleys to your doorstep.
+              Meet the dedicated growers bringing fresh organic produce directly from Pakistan&apos;s valleys to your doorstep.
             </p>
           </div>
           <CarouselStacked />
@@ -527,7 +524,6 @@ export default function HomePage() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(userData) => {
-          setUser(userData);
           setStoredUser(userData);
         }}
       />

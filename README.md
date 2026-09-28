@@ -10,6 +10,10 @@ Marco uses an OpenAI-compatible chat completions API for questions that are not 
 
 Set `SESSION_SECRET` to a long, random server-only value in production. Farmer sessions use a signed, HTTP-only cookie and each farmer is associated with one producer through `farmer_profiles.user_id`. Local development uses a development-only signing secret when `SESSION_SECRET` is not set.
 
+## Admin Access
+
+Configure server-only `ADMIN_EMAIL` and `ADMIN_PASSWORD` values for environment-based administrator login, or provision an administrator account in the database. Demo and default admin credentials are disabled. New account passwords are stored as salted scrypt hashes; existing plain-text database passwords are upgraded after a successful login.
+
 ## Getting Started
 
 First, run the development server:

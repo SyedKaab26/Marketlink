@@ -172,21 +172,26 @@ export default function FarmerDashboardSuite() {
 
   // Check auth session
   useEffect(() => {
-    const storedUser = getStoredUser();
-    if (storedUser?.role === 'farmer' || storedUser?.role === 'admin') {
-      setIsAuthenticated(true);
-      fetchInitialData();
-    } else {
-      setLoading(false);
-    }
+    let active = true;
+    void Promise.resolve().then(async () => {
+      const storedUser = getStoredUser();
+      if (!active) return;
+      if (storedUser?.role === 'farmer' || storedUser?.role === 'admin') {
+        setIsAuthenticated(true);
+        await fetchInitialData();
+      } else {
+        setLoading(false);
+      }
+    });
+    return () => { active = false; };
   }, []);
 
   // Sync current producer details when selectedProducerId changes
   useEffect(() => {
     if (producersList.length > 0) {
       const found = producersList.find((p) => p.id === selectedProducerId) || producersList[0];
-      setCurrentProducer(found);
-      if (found) {
+      queueMicrotask(() => {
+        setCurrentProducer(found);
         setProfileName(found.name || '');
         setProfileLocation(found.location || '');
         setProfileCity(found.city || '');
@@ -194,11 +199,11 @@ export default function FarmerDashboardSuite() {
         setProfileDescription(found.description || '');
         setProfileStory(found.story || '');
         setProfileImageUrl(found.image_url || '');
-      }
+      });
     }
   }, [selectedProducerId, producersList]);
 
-  const fetchInitialData = async () => {
+  async function fetchInitialData() {
     setLoading(true);
     try {
       const user = getStoredUser();
@@ -229,7 +234,7 @@ export default function FarmerDashboardSuite() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -290,10 +295,10 @@ export default function FarmerDashboardSuite() {
 
   const farmerOrders = useMemo(() => {
     return allOrders.filter((order: Order) => {
-      let items: any[] = [];
+      let items: (OrderItem & { producer_id?: number })[] = [];
       if (typeof order.items_json === 'string') {
         try {
-          items = JSON.parse(order.items_json);
+          items = JSON.parse(order.items_json) as (OrderItem & { producer_id?: number })[];
         } catch {
           items = [];
         }
@@ -301,7 +306,7 @@ export default function FarmerDashboardSuite() {
         items = order.items_json;
       }
       if (items.length === 0) return false;
-      return items.some((item: any) => {
+      return items.some((item) => {
         if (item.product?.producer_id) {
           return item.product.producer_id === selectedProducerId;
         }
@@ -1492,7 +1497,7 @@ export default function FarmerDashboardSuite() {
               <div>
                 <h2 className="text-xl font-serif font-bold text-white">Customer Reviews & Feedback</h2>
                 <p className="text-xs text-slate-400 mt-0.5">
-                  See what buyers say about your farm's products and respond to direct feedback.
+                  See what buyers say about your farm&apos;s products and respond to direct feedback.
                 </p>
               </div>
 
@@ -1511,7 +1516,7 @@ export default function FarmerDashboardSuite() {
                     </div>
 
                     <p className="text-xs text-slate-300 italic bg-black/20 p-3 rounded-xl border border-emerald-900/30">
-                      "{rev.comment}"
+                      &quot;{rev.comment}&quot;
                     </p>
 
                     {rev.reply ? (

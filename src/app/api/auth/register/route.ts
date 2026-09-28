@@ -30,8 +30,7 @@ export async function POST(request: NextRequest) {
       user: {
         ...newUser,
         subscriptionActive: true
-      },
-      token: 'harvie_jwt_token_sample_123456789'
+      }
     });
     setAuthCookie(response, newUser);
     return response;

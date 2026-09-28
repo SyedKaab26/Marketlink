@@ -10,7 +10,7 @@ import AuthModal from '@/components/AuthModal';
 import QuizModal from '@/components/QuizModal';
 import CartDrawer from '@/components/CartDrawer';
 import DbStatusBadge from '@/components/DbStatusBadge';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser, useStoredUser } from '@/lib/auth';
 import { useCart, addToCart as addProductToCart, updateCartQuantity, clearCart } from '@/lib/cart';
 import type { User, Product } from '@/lib/types';
 import {
@@ -95,7 +95,7 @@ function FilterSidebar({ filters, updateFilters, clearFilters, onDone }: FilterS
             <label key={category} className="flex cursor-pointer items-center gap-2.5 text-[13px] text-[#526158]">
               <input type="checkbox" checked={filters.categories.includes(category)} onChange={() => toggleCategory(category)} className="h-4 w-4 accent-[#1D6B4B]" />
               <span>{category}</span>
-              <span className="ml-auto text-[11px] text-[#98A49B]">{DISCOVERY_PRODUCTS.filter((item) => item.category === category).length}</span>
+
             </label>
           ))}
         </div>
@@ -254,19 +254,18 @@ function ShopContent() {
   const [hoveredFarmer, setHoveredFarmer] = useState<string | null>(null);
   const [authOpen, setAuthOpen] = useState(false);
   const [quizOpen, setQuizOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const user = useStoredUser();
   const [extraProducts, setExtraProducts] = useState<DiscoveryProduct[]>([]);
 
   useEffect(() => {
-    setUser(getStoredUser());
     
     // Check quiz preferences in localStorage
     try {
       const savedQuiz = localStorage.getItem('marketlink_quiz_prefs');
       if (savedQuiz) {
-        const parsed = JSON.parse(savedQuiz);
+        const parsed = JSON.parse(savedQuiz) as { dietary_prefs?: unknown };
         if (Array.isArray(parsed.dietary_prefs) && parsed.dietary_prefs.includes('Organic')) {
-          setFilters(prev => ({ ...prev, organic: true }));
+          queueMicrotask(() => setFilters(prev => ({ ...prev, organic: true })));
         }
       }
     } catch {}
@@ -293,7 +292,7 @@ function ShopContent() {
               originalPrice: p.original_price || Math.round(p.price * 1.25),
               unit: p.unit || 'each',
               stock: p.stock || 20,
-              rating: (p as any).rating || 4.8,
+              rating: 4.8,
               reviewsCount: 14,
               image: p.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=600&q=80',
               farmer: {
@@ -443,7 +442,6 @@ function ShopContent() {
   return (
     <div className="min-h-screen bg-[#F5F7F4] text-[#24382B]">
       <Header cartCount={totalCartCount} onOpenCart={() => setBasketOpen(true)} onOpenQuiz={() => setQuizOpen(true)} onOpenAuth={() => setAuthOpen(true)} onLogout={() => {
-        setUser(null);
         clearStoredUser();
       }} user={user} />
       <main className="mx-auto min-h-[70vh] max-w-[1440px] px-3 pb-12 pt-4 sm:px-6 lg:px-8">
@@ -537,7 +535,6 @@ function ShopContent() {
 
       {farmerPreview && <FarmerPreview farmer={farmerPreview} onClose={() => setFarmerPreview(null)} />}
       <AuthModal isOpen={authOpen} onClose={() => setAuthOpen(false)} onLoginSuccess={(nextUser) => {
-        setUser(nextUser);
         setStoredUser(nextUser);
       }} />
       <QuizModal isOpen={quizOpen} onClose={() => setQuizOpen(false)} onComplete={() => setQuizOpen(false)} />

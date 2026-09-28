@@ -7,9 +7,9 @@ import CartDrawer from '@/components/CartDrawer';
 import QuizModal from '@/components/QuizModal';
 import AuthModal from '@/components/AuthModal';
 import DbStatusBadge from '@/components/DbStatusBadge';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser, useStoredUser } from '@/lib/auth';
 import { useCart, updateCartQuantity, clearCart } from '@/lib/cart';
-import { Producer, User } from '@/lib/types';
+import { Producer } from '@/lib/types';
 import { MapPin, Heart, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
@@ -19,10 +19,9 @@ export default function ProducersPage() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isQuizOpen, setIsQuizOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const user = useStoredUser();
 
   useEffect(() => {
-    setUser(getStoredUser());
     fetch('/api/producers')
       .then((res) => res.json())
       .then((data) => {
@@ -39,7 +38,6 @@ export default function ProducersPage() {
         onOpenQuiz={() => setIsQuizOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
         onLogout={() => {
-          setUser(null);
           clearStoredUser();
         }}
         user={user}
@@ -138,7 +136,6 @@ export default function ProducersPage() {
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
         onLoginSuccess={(u) => {
-          setUser(u);
           setStoredUser(u);
         }}
       />

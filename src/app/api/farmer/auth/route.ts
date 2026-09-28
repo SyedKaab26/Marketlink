@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { findUserByEmail, getOrCreateFarmerProducer } from '@/lib/db';
+import { findUserByEmail, getOrCreateFarmerProducer, updateUserPasswordHash } from '@/lib/db';
 import { setAuthCookie } from '@/lib/server-auth';
+import { hashPassword, verifyPassword } from '@/lib/password';
 
 export async function POST(request: NextRequest) {
   try {
@@ -8,8 +9,11 @@ export async function POST(request: NextRequest) {
     const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
     const user = await findUserByEmail(cleanEmail);
     const userPassword = user?.password || user?.password_hash;
-    if (!user || user.role !== 'farmer' || !userPassword || password !== userPassword) {
+    if (!user || user.role !== 'farmer' || typeof password !== 'string' || !userPassword || !await verifyPassword(password, userPassword)) {
       return NextResponse.json({ success: false, error: 'Invalid farmer credentials.' }, { status: 401 });
+    }
+    if (!userPassword.startsWith('scrypt:')) {
+      await updateUserPasswordHash(user.id, await hashPassword(password));
     }
 
     const producer = await getOrCreateFarmerProducer(user);

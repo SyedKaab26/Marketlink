@@ -45,14 +45,14 @@ import {
 import type { Product, Producer, Category, Order, User, QuizResponse, DbStatus, AdminStats, OrderItem } from '@/lib/types';
 import { INITIAL_CATEGORIES } from '@/lib/data';
 import { resolveProductImage } from '@/lib/product-helpers';
-import { clearStoredUser, getStoredUser, setStoredUser } from '@/lib/auth';
+import { clearStoredUser, setStoredUser } from '@/lib/auth';
 
 type TabType = 'overview' | 'orders' | 'products' | 'producers' | 'customers' | 'quiz' | 'settings';
 
 export default function AdminDashboardSuite() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [adminEmail, setAdminEmail] = useState('admin@marketlink.pk');
-  const [adminPassword, setAdminPassword] = useState('admin123');
+  const [adminEmail, setAdminEmail] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -161,26 +161,22 @@ export default function AdminDashboardSuite() {
     }
   };
 
-  // Check auth cookie / session on load
+  // Check the signed server session on load.
   useEffect(() => {
-    const savedAuth = localStorage.getItem('marketlink_admin_auth');
-    const storedUser = getStoredUser();
-    if (savedAuth === 'true' || storedUser?.role === 'admin') {
-      setIsAuthenticated(true);
-      if (storedUser?.role === 'admin' && savedAuth !== 'true') {
-        localStorage.setItem('marketlink_admin_auth', 'true');
-      }
-      // Ensure server cookie is active
-      fetch('/api/admin/auth', { method: 'GET' }).then(r => r.json()).then(data => {
-        if (data.success && data.user) {
-          setStoredUser(data.user);
-        }
-      }).catch(() => {});
-    }
-    fetchInitialData();
+    let active = true;
+    fetch('/api/admin/auth')
+      .then((response) => response.ok ? response.json() : null)
+      .then((data) => {
+        if (!active || data?.user?.role !== 'admin') return;
+        setStoredUser(data.user);
+        setIsAuthenticated(true);
+        void fetchInitialData();
+      })
+      .catch(() => {});
+    return () => { active = false; };
   }, []);
 
-  const fetchInitialData = async () => {
+  async function fetchInitialData() {
     setLoading(true);
     try {
       const [prodRes, procRes, ordRes, usrRes, quizRes, dbRes, statsRes] = await Promise.all([
@@ -205,7 +201,7 @@ export default function AdminDashboardSuite() {
     } finally {
       setLoading(false);
     }
-  };
+  }
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -221,7 +217,6 @@ export default function AdminDashboardSuite() {
       const data = await res.json();
 
       if (data.success) {
-        localStorage.setItem('marketlink_admin_auth', 'true');
         const adminUser: User = data.user || {
           id: 1,
           email: adminEmail,
@@ -245,45 +240,9 @@ export default function AdminDashboardSuite() {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setIsLoggingIn(true);
-    setLoginError('');
-    try {
-      const res = await fetch('/api/admin/auth', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: 'admin@marketlink.pk', password: 'admin123' })
-      });
-      const data = await res.json();
-      if (data.success) {
-        localStorage.setItem('marketlink_admin_auth', 'true');
-        const adminUser: User = data.user || {
-          id: 1,
-          email: 'admin@marketlink.pk',
-          full_name: 'MarketLink Admin',
-          role: 'admin',
-          address: 'Karachi Central',
-          zipcode: '15201',
-          subscriptionActive: true
-        };
-        setStoredUser(adminUser);
-        setIsAuthenticated(true);
-        setNotice('1-Click Demo Admin Session Activated.');
-        fetchInitialData();
-      } else {
-        setLoginError(data.error || 'Demo login failed');
-      }
-    } catch {
-      setLoginError('Demo login failed.');
-    } finally {
-      setIsLoggingIn(false);
-    }
-  };
-
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' }).catch(() => {});
     clearStoredUser();
-    localStorage.removeItem('marketlink_admin_auth');
     setIsAuthenticated(false);
   };
 
@@ -617,18 +576,6 @@ export default function AdminDashboardSuite() {
               Sign In to Dashboard
             </button>
           </form>
-
-          <div className="mt-6 pt-6 border-t border-[#2D543F] text-center">
-            <p className="text-xs text-[#8B7355] mb-3">Quick Demo Access:</p>
-            <button
-              type="button"
-              disabled={isLoggingIn}
-              onClick={handleDemoLogin}
-              className="inline-flex items-center gap-2 rounded-full border border-[#2D543F] bg-[#112319] px-4 py-2 text-xs font-bold text-[#E06D3B] hover:bg-[#E06D3B] hover:text-white transition disabled:opacity-50"
-            >
-              {isLoggingIn ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} 1-Click Demo Login
-            </button>
-          </div>
 
           <div className="mt-6 text-center">
             <Link href="/" className="text-xs text-[#A3B899] hover:underline">← Back to MarketLink Storefront</Link>
@@ -1822,7 +1769,7 @@ export default function AdminDashboardSuite() {
             <div>
               <h3 className="font-bold text-xs text-[#1D3E2E] uppercase tracking-wider mb-2">Item Breakdown</h3>
               <div className="divide-y divide-[#F0EBE1] border-y border-[#F0EBE1] py-2">
-                {Array.isArray(viewingOrderDetails.items_json) && viewingOrderDetails.items_json.map((item: any, idx: number) => (
+                {Array.isArray(viewingOrderDetails.items_json) && viewingOrderDetails.items_json.map((item: OrderItem, idx: number) => (
                   <div key={idx} className="py-2 flex justify-between text-xs">
                     <div>
                       <p className="font-bold text-[#1D3E2E]">{item.name || item.product?.name || 'Farm Product'}</p>
@@ -1924,7 +1871,7 @@ export default function AdminDashboardSuite() {
                 <label className="block font-bold text-[#1D3E2E] uppercase mb-1">Account Role</label>
                 <select
                   value={newUserRole}
-                  onChange={e => setNewUserRole(e.target.value as any)}
+                  onChange={e => setNewUserRole(e.target.value as 'customer' | 'farmer' | 'admin')}
                   className="w-full rounded-xl bg-[#F9F6F0] border border-[#E8E2D5] px-3.5 py-2.5 text-xs text-[#1D3E2E] focus:outline-none"
                 >
                   <option value="customer">Customer</option>
