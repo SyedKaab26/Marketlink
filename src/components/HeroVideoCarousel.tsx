@@ -46,12 +46,13 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isMuted, setIsMuted] = useState(true);
+  const [videoStartedIndex, setVideoStartedIndex] = useState<number | null>(null);
   const [progress, setProgress] = useState(0);
   const videoRefs = useRef<(HTMLVideoElement | null)[]>([]);
 
   // Timer & progress bar for auto sliding
   useEffect(() => {
-    if (!isPlaying) return;
+    if (!isPlaying || videoStartedIndex !== currentIndex) return;
 
     setProgress(0);
     const interval = 100;
@@ -75,7 +76,7 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
       clearInterval(progressTimer);
       clearTimeout(slideTimer);
     };
-  }, [currentIndex, isPlaying]);
+  }, [currentIndex, isPlaying, videoStartedIndex]);
 
   // Separate slide reset from play/pause/mute toggle to avoid video reset loop
   useEffect(() => {
@@ -84,7 +85,6 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
       video.muted = isMuted;
 
       if (idx === currentIndex) {
-        video.currentTime = 0;
         if (isPlaying) {
           const promise = video.play();
           if (promise !== undefined) {
@@ -150,23 +150,25 @@ export default function HeroVideoCarousel({ onOpenQuiz }: HeroVideoCarouselProps
               sizes="100vw"
               className="object-cover scale-105 filter brightness-90 pointer-events-none"
             />
-            <video
-              ref={(el) => {
-                if (el) {
-                  el.muted = isMuted;
+            {idx === currentIndex && (
+              <video
+                ref={(el) => {
                   videoRefs.current[idx] = el;
-                }
-              }}
-              poster={slide.poster}
-              autoPlay
-              playsInline
-              muted
-              preload={idx === currentIndex ? 'auto' : 'metadata'}
-              loop
-              className="absolute inset-0 w-full h-full object-cover scale-105 filter brightness-90 transition-transform duration-[10000ms] ease-out transform"
-            >
-              <source src={slide.src} type="video/mp4" />
-            </video>
+                  if (el) el.muted = isMuted;
+                }}
+                poster={slide.poster}
+                autoPlay
+                playsInline
+                muted
+                preload="auto"
+                onPlaying={() => setVideoStartedIndex(idx)}
+                onError={() => setVideoStartedIndex(idx)}
+                loop
+                className="absolute inset-0 w-full h-full object-cover scale-105 filter brightness-90 transition-transform duration-[10000ms] ease-out transform"
+              >
+                <source src={slide.src} type="video/mp4" />
+              </video>
+            )}
           </div>
         ))}
 

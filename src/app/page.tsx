@@ -64,7 +64,6 @@ export default function HomePage() {
     },
     {
       id: 'lahore',
-      name: 'Lahore Harvest Exchange',
       city: 'Lahore, Punjab',
       lat: 31.5204,
       lng: 74.3587,
@@ -314,10 +313,16 @@ export default function HomePage() {
       mapInstanceRef.current = map;
     };
 
-    void initMap();
+    const observer = new IntersectionObserver((entries) => {
+      if (!entries.some((entry) => entry.isIntersecting)) return;
+      observer.disconnect();
+      void initMap();
+    }, { rootMargin: '300px' });
+    observer.observe(mapRef.current);
 
     return () => {
       isMounted = false;
+      observer.disconnect();
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;

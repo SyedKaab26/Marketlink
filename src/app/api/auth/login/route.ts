@@ -11,13 +11,13 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
-    const envAdminEmail = (process.env.ADMIN_EMAIL || 'admin@marketlink.pk').trim().toLowerCase();
-    const envAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const envAdminPassword = process.env.ADMIN_PASSWORD || '';
 
-    const isAdminEmail = cleanEmail === envAdminEmail || cleanEmail === 'admin@marketlink.com' || cleanEmail === 'admin@marketlink.pk' || cleanEmail === 'admin';
+    const isAdminEmail = !!envAdminEmail && cleanEmail === envAdminEmail;
 
     if (isAdminEmail) {
-      if (password !== envAdminPassword && password !== 'admin123' && password !== 'admin') {
+      if (!envAdminPassword || password !== envAdminPassword) {
         return NextResponse.json({ success: false, error: 'Invalid email or password' }, { status: 401 });
       }
 

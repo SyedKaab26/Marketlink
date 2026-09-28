@@ -368,6 +368,7 @@ const Card = ({ slide, index, total, progress, config, onCardClick }: CardProps)
       <img
         src={slide.image}
         alt={slide.title}
+        loading="lazy"
         className="absolute inset-0 w-full h-full object-cover pointer-events-none transition-transform duration-700 group-hover:scale-110"
       />
 

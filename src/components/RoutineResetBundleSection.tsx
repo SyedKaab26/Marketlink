@@ -17,6 +17,7 @@ export default function RoutineResetBundleSection({
           <img
             src="/images/vegetable-basket-reset.jpg"
             alt="21-Day Organic Vegetable Basket Routine Reset Bundle"
+            loading="lazy"
             onError={(e) => {
               (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1595855759920-86582396756a?auto=format&fit=crop&w=1400&q=85';
             }}

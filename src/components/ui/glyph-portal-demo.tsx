@@ -1,28 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import GlyphPortal from "@/components/ui/glyph-portal";
 import { Sprout, Award, Truck, Sparkles, CheckCircle2, ArrowRight } from "lucide-react";
 
 const settings = { word: "HARVEST", scrollLength: 2.4, interactive: true, annotations: false };
-const family = '"Glyph Portal Jakarta", Arial, sans-serif';
-let fontLoad: Promise<void> | undefined;
+const family = 'var(--font-plus-jakarta), Arial, sans-serif';
 
 export default function GlyphPortalDemo(props: Partial<typeof settings>) {
   const s = { ...settings, ...props };
-  const [face, setFace] = useState<string>("Arial, sans-serif");
-
-  useEffect(() => {
-    let settled = false;
-    const finish = (value: string) => { if (!settled) { settled = true; setFace(value); } };
-    fontLoad ??= new FontFace(
-      "Glyph Portal Jakarta",
-      'url("https://cdn.21st.dev/assets/mirror/15/153fc85b70298beeb1d61a5f723331649e7f23bb77302a66e61cb3e2fbdb5e79.woff2")',
-      { weight: "400 700" }
-    ).load().then((font) => { document.fonts.add(font); });
-    void fontLoad.then(() => finish(family), () => finish("Arial, sans-serif"));
-    return () => { settled = true; };
-  }, []);
 
   return (
     <div
@@ -35,7 +20,7 @@ export default function GlyphPortalDemo(props: Partial<typeof settings>) {
         minHeight: "100vh",
         background: "#082117",
         containerType: "inline-size",
-        fontFamily: face,
+        fontFamily: family,
       }}
     >
       <style>{`
@@ -150,9 +135,9 @@ export default function GlyphPortalDemo(props: Partial<typeof settings>) {
 
       <GlyphPortal
         word={s.word}
-        fontFamily={face}
+        fontFamily={family}
         fontWeight={900}
-        style={{ fontFamily: face }}
+        style={{ fontFamily: family }}
         scrollLength={s.scrollLength}
         interactive={s.interactive}
         annotations={s.annotations}

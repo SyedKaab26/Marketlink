@@ -59,7 +59,7 @@ export default function ChatbotWidget() {
     {
       id: 'welcome-marco',
       sender: 'assistant',
-      text: 'Assalam-o-Alaikum! 👋 Main **Marco** hoon, MarketLink ka AI Shopping & Support Assistant.\n\nMain aap ki fresh Pakistani produce (50+ items), delivery hubs (Karachi, Lahore, Islamabad, etc.), order tracking, aur farmer onboarding mein 100% help kar sakta hoon. Aaj aap kya dhoond rahe hain?',
+      text: 'Assalam-o-Alaikum! 👋 Main **Marco** hoon, MarketLink ka shopping aur support assistant.\n\nProducts, delivery, orders, website ya general sawalon mein madad ke liye poochain. Aaj aap kya dhoond rahe hain?',
       suggestedActions: [
         '🥦 Fresh Vegetables',
         '🍎 Fruits & Seasonals',
@@ -110,7 +110,8 @@ export default function ChatbotWidget() {
       });
 
       if (!res.ok) {
-        throw new Error('Failed to fetch response');
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.reply || 'Marco is temporarily unavailable. Please try again shortly.');
       }
 
       const data = await res.json();
@@ -132,7 +133,9 @@ export default function ChatbotWidget() {
         {
           id: `err-${Date.now()}`,
           sender: 'assistant',
-          text: 'Marco ran into a temporary network glitch. Please ask your question again!',
+          text: err instanceof Error && err.message !== 'Failed to fetch'
+            ? err.message
+            : 'Marco ran into a temporary network glitch. Please ask your question again!',
           timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         }
       ]);
@@ -169,7 +172,7 @@ export default function ChatbotWidget() {
       {
         id: `welcome-marco-reset-${Date.now()}`,
         sender: 'assistant',
-        text: 'Chat reset! Main **Marco** hoon. Aap MarketLink ke bare mein koi bhi swaal poochein.',
+        text: 'Chat reset! Main **Marco** hoon. Products, delivery, website ya general sawal poochain.',
         suggestedActions: [
           '🥦 Fresh Vegetables',
           '🍎 Fruits & Seasonals',
@@ -240,7 +243,7 @@ export default function ChatbotWidget() {
                 </h3>
                 <span className="text-[11px] text-[#C4D6CB] font-medium flex items-center gap-1">
                   <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  Online · Full Store Knowledge
+                  Shopping & general help
                 </span>
               </div>
             </div>

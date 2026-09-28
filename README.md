@@ -1,5 +1,11 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## AI Chat Setup
+
+Marco uses an OpenAI-compatible chat completions API for questions that are not covered by the store's built-in answers. Add `OPENAI_API_KEY` to your existing `.env.local` and restart the development server; keep the other settings already in that file. The key stays on the server and must not use a `NEXT_PUBLIC_` prefix.
+
+`OPENAI_MODEL` defaults to `gpt-4o-mini`. For an OpenAI-compatible provider, set `OPENAI_BASE_URL` to its API base URL. Model responses can still be incorrect; MarketLink-specific answers are constrained to the catalog and policy context included with each request.
+
 ## Getting Started
 
 First, run the development server:

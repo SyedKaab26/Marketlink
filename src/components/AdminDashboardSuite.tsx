@@ -10,7 +10,7 @@ import {
   ChevronRight,
   Clock,
   Database,
-  DollarSign,
+  Banknote,
   Download,
   Edit,
   Eye,
@@ -758,7 +758,7 @@ export default function AdminDashboardSuite() {
                 <div className="flex items-center justify-between mb-4">
                   <span className="text-xs font-bold uppercase tracking-[0.12em] text-[#8B7355]">Gross Revenue</span>
                   <div className="w-10 h-10 rounded-2xl bg-emerald-100 text-emerald-700 flex items-center justify-center">
-                    <DollarSign className="w-5 h-5" />
+                    <Banknote className="w-5 h-5" />
                   </div>
                 </div>
                 <p className="font-serif text-2xl font-bold text-[#1D3E2E]">

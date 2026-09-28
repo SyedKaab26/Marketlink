@@ -4,22 +4,16 @@ export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
 
-    const cleanEmail = email ? String(email).trim().toLowerCase() : '';
-    const envAdminPassword = process.env.ADMIN_PASSWORD || 'admin123';
+    const cleanEmail = typeof email === 'string' ? email.trim().toLowerCase() : '';
+    const envAdminEmail = (process.env.ADMIN_EMAIL || '').trim().toLowerCase();
+    const envAdminPassword = process.env.ADMIN_PASSWORD || '';
 
-    if (
-      cleanEmail === 'admin@marketlink.com' ||
-      cleanEmail === 'admin@marketlink.pk' ||
-      cleanEmail === 'admin' ||
-      password === envAdminPassword ||
-      password === 'admin123' ||
-      password === 'admin'
-    ) {
+    if (envAdminEmail && envAdminPassword && cleanEmail === envAdminEmail && password === envAdminPassword) {
       const response = NextResponse.json({
         success: true,
         user: {
           id: 1,
-          email: cleanEmail && cleanEmail.includes('@') ? cleanEmail : 'admin@marketlink.pk',
+          email: cleanEmail,
           full_name: 'MarketLink Admin',
           role: 'admin'
         }

@@ -11,7 +11,7 @@ import {
   CheckCircle2,
   ChevronRight,
   Clock,
-  DollarSign,
+  Banknote,
   Download,
   Edit,
   Eye,
@@ -90,11 +90,17 @@ interface PayoutTransaction {
   bankAccount: string;
 }
 
+const formatPKR = (amount: number) =>
+  `Rs. ${Number(amount || 0).toLocaleString('en-PK', {
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  })}`;
+
 export default function FarmerDashboardSuite() {
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [farmerEmail, setFarmerEmail] = useState('farmer@greenacres.com');
-  const [farmerPassword, setFarmerPassword] = useState('farmer123');
+  const [farmerEmail, setFarmerEmail] = useState('');
+  const [farmerPassword, setFarmerPassword] = useState('');
   const [loginError, setLoginError] = useState('');
   const [isLoggingIn, setIsLoggingIn] = useState(false);
 
@@ -304,21 +310,31 @@ export default function FarmerDashboardSuite() {
     }
   };
 
-  const handleLogin = (e: FormEvent) => {
+  const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setIsLoggingIn(true);
     setLoginError('');
 
-    setTimeout(() => {
-      if (farmerEmail.trim().length > 3 && farmerPassword === 'farmer123') {
+    try {
+      const response = await fetch('/api/farmer/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: farmerEmail, password: farmerPassword })
+      });
+      const data = await response.json();
+
+      if (data.success) {
         setIsAuthenticated(true);
         localStorage.setItem('marketlink_farmer_auth', 'true');
         setNotice('Successfully logged in to Farmer Portal.');
       } else {
-        setLoginError('Invalid farmer credentials. Use password "farmer123".');
+        setLoginError(data.error || 'Invalid farmer credentials.');
       }
+    } catch {
+      setLoginError('Unable to verify farmer credentials. Please try again.');
+    } finally {
       setIsLoggingIn(false);
-    }, 600);
+    }
   };
 
   const handleLogout = () => {
@@ -669,7 +685,7 @@ export default function FarmerDashboardSuite() {
                 onChange={(e) => setFarmerEmail(e.target.value)}
                 required
                 className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-slate-400 text-sm focus:outline-none focus:border-[#E06D3B] focus:ring-1 focus:ring-[#E06D3B]"
-                placeholder="farmer@greenacres.com"
+                placeholder="name@example.com"
               />
             </div>
 
@@ -683,7 +699,6 @@ export default function FarmerDashboardSuite() {
                 className="w-full px-4 py-3 rounded-xl bg-black/20 border border-white/10 text-white placeholder-slate-400 text-sm focus:outline-none focus:border-[#E06D3B] focus:ring-1 focus:ring-[#E06D3B]"
                 placeholder="••••••••"
               />
-              <p className="text-[10px] text-emerald-300/70 mt-1">Default Demo Password: <code className="bg-black/30 px-1 py-0.5 rounded text-amber-300">farmer123</code></p>
             </div>
 
             <button
@@ -889,10 +904,10 @@ export default function FarmerDashboardSuite() {
                 <div className="bg-[#14261C] border border-emerald-900/60 p-5 rounded-2xl shadow-sm space-y-3">
                   <div className="flex items-center justify-between text-slate-400 text-xs font-semibold">
                     <span>Total Farm Sales</span>
-                    <DollarSign className="w-4 h-4 text-emerald-400" />
+                    <Banknote className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div className="text-2xl font-bold text-white">
-                    ${Number(farmerStats.totalRevenue || 0).toFixed(2)}
+                    {formatPKR(farmerStats.totalRevenue)}
                   </div>
                   <div className="text-[11px] text-emerald-400 font-medium flex items-center gap-1">
                     <ArrowUpRight className="w-3.5 h-3.5" /> +14.2% from last month
@@ -980,7 +995,7 @@ export default function FarmerDashboardSuite() {
                               </span>
                             </div>
                             <p className="text-[11px] text-slate-400 mt-1">
-                              Customer: {order.customer_name || 'Anonymous Buyer'} • ${Number(order.total_amount || 0).toFixed(2)}
+                              Customer: {order.customer_name || 'Anonymous Buyer'} • {formatPKR(order.total_amount)}
                             </p>
                           </div>
 
@@ -1131,7 +1146,7 @@ export default function FarmerDashboardSuite() {
                               {categories.find((c) => c.id === prod.category_id)?.name || 'Produce'}
                             </td>
                             <td className="px-4 py-3 font-bold text-emerald-300">
-                              ${Number(prod.price || 0).toFixed(2)} / {prod.unit || 'kg'}
+                              {formatPKR(prod.price)} / {prod.unit || 'kg'}
                             </td>
                             <td className="px-4 py-3 font-medium">
                               <span className={(prod.stock ?? 10) < 10 ? 'text-amber-400 font-bold' : 'text-slate-300'}>
@@ -1237,7 +1252,7 @@ export default function FarmerDashboardSuite() {
                         </div>
 
                         <div className="flex items-center gap-3">
-                          <span className="text-sm font-bold text-amber-400">${Number(order.total_amount || 0).toFixed(2)}</span>
+                          <span className="text-sm font-bold text-amber-400">{formatPKR(order.total_amount)}</span>
                           <select
                             value={order.status}
                             onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as Order['status'])}
@@ -1272,7 +1287,7 @@ export default function FarmerDashboardSuite() {
                             ? order.items_json.map((item, idx) => (
                                 <div key={idx} className="flex justify-between py-1 border-b border-emerald-900/20 last:border-none">
                                   <span>{item.name || item.product?.name || 'Farm Product'} × {item.quantity || 1}</span>
-                                  <span className="font-semibold text-emerald-300">${(Number(item.price || item.product?.price || 0) * Number(item.quantity || 1)).toFixed(2)}</span>
+                                  <span className="font-semibold text-emerald-300">{formatPKR(Number(item.price || item.product?.price || 0) * Number(item.quantity || 1))}</span>
                                 </div>
                               ))
                             : 'Standard Farm Box'}
@@ -1469,20 +1484,20 @@ export default function FarmerDashboardSuite() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="bg-[#14261C] border border-emerald-900/60 p-5 rounded-2xl space-y-2">
                   <span className="text-slate-400 text-xs font-semibold">Total Revenue</span>
-                  <div className="text-2xl font-bold text-white">${Number(farmerStats.totalRevenue || 0).toFixed(2)}</div>
+                  <div className="text-2xl font-bold text-white">{formatPKR(farmerStats.totalRevenue)}</div>
                 </div>
 
                 <div className="bg-[#14261C] border border-emerald-900/60 p-5 rounded-2xl space-y-2">
                   <span className="text-slate-400 text-xs font-semibold">Platform Fee (10%)</span>
                   <div className="text-2xl font-bold text-rose-400">
-                    -${(Number(farmerStats.totalRevenue || 0) * 0.1).toFixed(2)}
+                    -{formatPKR(farmerStats.totalRevenue * 0.1)}
                   </div>
                 </div>
 
                 <div className="bg-[#14261C] border border-emerald-900/60 p-5 rounded-2xl space-y-2">
                   <span className="text-slate-400 text-xs font-semibold">Net Eligible Payout</span>
                   <div className="text-2xl font-bold text-emerald-400">
-                    ${(Number(farmerStats.totalRevenue || 0) * 0.9).toFixed(2)}
+                    {formatPKR(farmerStats.totalRevenue * 0.9)}
                   </div>
                 </div>
               </div>
@@ -1510,8 +1525,8 @@ export default function FarmerDashboardSuite() {
                           <td className="px-4 py-3 font-bold text-white">{tx.id}</td>
                           <td className="px-4 py-3 text-slate-400">{tx.date}</td>
                           <td className="px-4 py-3 text-slate-300">{tx.bankAccount}</td>
-                          <td className="px-4 py-3 text-slate-400">${Number(tx.amount || 0).toFixed(2)}</td>
-                          <td className="px-4 py-3 font-bold text-emerald-300">${Number(tx.netAmount || 0).toFixed(2)}</td>
+                          <td className="px-4 py-3 text-slate-400">{formatPKR(tx.amount)}</td>
+                          <td className="px-4 py-3 font-bold text-emerald-300">{formatPKR(tx.netAmount)}</td>
                           <td className="px-4 py-3">
                             <span
                               className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
@@ -1620,14 +1635,14 @@ export default function FarmerDashboardSuite() {
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-slate-300 font-semibold mb-1">Price ($)</label>
+                  <label className="block text-slate-300 font-semibold mb-1">Price (Rs.)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={productPrice}
                     onChange={(e) => setProductPrice(e.target.value)}
                     required
-                    placeholder="4.99"
+                    placeholder="180.00"
                     className="w-full px-3 py-2 rounded-xl bg-black/30 border border-emerald-800 text-white text-xs focus:outline-none focus:border-[#E06D3B]"
                   />
                 </div>
@@ -1906,15 +1921,15 @@ export default function FarmerDashboardSuite() {
             <div className="bg-black/30 p-4 rounded-2xl border border-emerald-900/60 space-y-2">
               <div className="flex justify-between">
                 <span className="text-slate-400">Available Gross Revenue:</span>
-                <span className="font-bold text-white">${Number(farmerStats.totalRevenue || 0).toFixed(2)}</span>
+                <span className="font-bold text-white">{formatPKR(farmerStats.totalRevenue)}</span>
               </div>
               <div className="flex justify-between">
                 <span className="text-slate-400">Platform Commission Fee (10%):</span>
-                <span className="font-bold text-rose-400">-${(Number(farmerStats.totalRevenue || 0) * 0.1).toFixed(2)}</span>
+                <span className="font-bold text-rose-400">-{formatPKR(farmerStats.totalRevenue * 0.1)}</span>
               </div>
               <div className="flex justify-between border-t border-emerald-900/60 pt-2">
                 <span className="text-emerald-300 font-bold">Net Payout to Bank:</span>
-                <span className="font-bold text-emerald-400 text-sm">${(Number(farmerStats.totalRevenue || 0) * 0.9).toFixed(2)}</span>
+                <span className="font-bold text-emerald-400 text-sm">{formatPKR(farmerStats.totalRevenue * 0.9)}</span>
               </div>
             </div>
 

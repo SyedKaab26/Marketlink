@@ -74,6 +74,7 @@ export default function ShopCollectionsSection({
               <img
                 src={item.imageSrc}
                 alt={item.title.replace('\n', ' ')}
+                loading="lazy"
                 onError={(e) => {
                   (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1550583724-b2692b85b150?auto=format&fit=crop&w=800&q=80';
                 }}
