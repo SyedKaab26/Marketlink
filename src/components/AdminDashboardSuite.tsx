@@ -96,6 +96,7 @@ export default function AdminDashboardSuite() {
   const [productProducerId, setProductProducerId] = useState('1');
   const [productUnit, setProductUnit] = useState('each');
   const [productStock, setProductStock] = useState('25');
+  const [productDietary, setProductDietary] = useState('Organic');
   const [productImageData, setProductImageData] = useState('');
   const [productInStock, setProductInStock] = useState(true);
   const [productDescription, setProductDescription] = useState('');
@@ -104,8 +105,10 @@ export default function AdminDashboardSuite() {
   const [editingProducer, setEditingProducer] = useState<Producer | null>(null);
   const [producerName, setProducerName] = useState('');
   const [producerLocation, setProducerLocation] = useState('');
+  const [producerCity, setProducerCity] = useState('');
   const [producerSpecialty, setProducerSpecialty] = useState('');
   const [producerDescription, setProducerDescription] = useState('');
+  const [producerStory, setProducerStory] = useState('');
   const [producerVerified, setProducerVerified] = useState(true);
 
   const [viewingOrderDetails, setViewingOrderDetails] = useState<Order | null>(null);
@@ -167,6 +170,12 @@ export default function AdminDashboardSuite() {
       if (storedUser?.role === 'admin' && savedAuth !== 'true') {
         localStorage.setItem('marketlink_admin_auth', 'true');
       }
+      // Ensure server cookie is active
+      fetch('/api/admin/auth', { method: 'GET' }).then(r => r.json()).then(data => {
+        if (data.success && data.user) {
+          setStoredUser(data.user);
+        }
+      }).catch(() => {});
     }
     fetchInitialData();
   }, []);
@@ -225,23 +234,47 @@ export default function AdminDashboardSuite() {
         setStoredUser(adminUser);
         setIsAuthenticated(true);
         setNotice('Successfully logged into MarketLink Admin Panel.');
+        fetchInitialData();
       } else {
         setLoginError(data.error || 'Invalid credentials');
       }
     } catch {
-      // Demo bypass for easy login if API fails
-      localStorage.setItem('marketlink_admin_auth', 'true');
-      const adminUser: User = {
-        id: 1,
-        email: adminEmail,
-        full_name: 'Admin',
-        role: 'admin',
-        address: 'Karachi Central',
-        zipcode: '15201',
-        subscriptionActive: true
-      };
-      setStoredUser(adminUser);
-      setIsAuthenticated(true);
+      setLoginError('Authentication failed. Check your network or credentials.');
+    } finally {
+      setIsLoggingIn(false);
+    }
+  };
+
+  const handleDemoLogin = async () => {
+    setIsLoggingIn(true);
+    setLoginError('');
+    try {
+      const res = await fetch('/api/admin/auth', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: 'admin@marketlink.pk', password: 'admin123' })
+      });
+      const data = await res.json();
+      if (data.success) {
+        localStorage.setItem('marketlink_admin_auth', 'true');
+        const adminUser: User = data.user || {
+          id: 1,
+          email: 'admin@marketlink.pk',
+          full_name: 'MarketLink Admin',
+          role: 'admin',
+          address: 'Karachi Central',
+          zipcode: '15201',
+          subscriptionActive: true
+        };
+        setStoredUser(adminUser);
+        setIsAuthenticated(true);
+        setNotice('1-Click Demo Admin Session Activated.');
+        fetchInitialData();
+      } else {
+        setLoginError(data.error || 'Demo login failed');
+      }
+    } catch {
+      setLoginError('Demo login failed.');
     } finally {
       setIsLoggingIn(false);
     }
@@ -250,6 +283,7 @@ export default function AdminDashboardSuite() {
   const handleLogout = async () => {
     await fetch('/api/admin/auth', { method: 'DELETE' }).catch(() => {});
     clearStoredUser();
+    localStorage.removeItem('marketlink_admin_auth');
     setIsAuthenticated(false);
   };
 
@@ -262,6 +296,7 @@ export default function AdminDashboardSuite() {
     setProductProducerId(String(producers[0]?.id || 1));
     setProductUnit('each');
     setProductStock('20');
+    setProductDietary('Organic');
     setProductImageData('');
     setProductInStock(true);
     setProductDescription('');
@@ -276,6 +311,7 @@ export default function AdminDashboardSuite() {
     setProductProducerId(String(prod.producer_id));
     setProductUnit(prod.unit || 'each');
     setProductStock(String(prod.stock || 15));
+    setProductDietary(prod.dietary_tags || 'Organic');
     setProductImageData(prod.image_url || '');
     setProductInStock(prod.in_stock !== false);
     setProductDescription(prod.description || '');
@@ -297,6 +333,7 @@ export default function AdminDashboardSuite() {
       producer_id: Number(productProducerId),
       unit: productUnit,
       stock: Number(productStock),
+      dietary_tags: productDietary,
       image_url: resolveProductImage(productImageData),
       in_stock: productInStock,
       description: productDescription
@@ -313,6 +350,8 @@ export default function AdminDashboardSuite() {
         setNotice(`Product "${productName}" saved successfully.`);
         setShowProductModal(false);
         fetchInitialData();
+      } else {
+        setNotice(data.error || 'Failed to save product.');
       }
     } catch {
       setNotice('Could not connect to server to save product.');
@@ -327,6 +366,8 @@ export default function AdminDashboardSuite() {
       if (data.success) {
         setNotice(`Product "${name}" deleted.`);
         fetchInitialData();
+      } else {
+        setNotice(data.error || 'Failed to delete product.');
       }
     } catch {
       setNotice('Failed to delete product.');
@@ -338,8 +379,10 @@ export default function AdminDashboardSuite() {
     setEditingProducer(null);
     setProducerName('');
     setProducerLocation('');
+    setProducerCity('');
     setProducerSpecialty('');
     setProducerDescription('');
+    setProducerStory('');
     setProducerVerified(true);
     setShowProducerModal(true);
   };
@@ -348,8 +391,10 @@ export default function AdminDashboardSuite() {
     setEditingProducer(proc);
     setProducerName(proc.name);
     setProducerLocation(proc.location);
+    setProducerCity(proc.city || proc.location || '');
     setProducerSpecialty(proc.specialty);
     setProducerDescription(proc.description || '');
+    setProducerStory(proc.story || proc.description || '');
     setProducerVerified(Boolean(proc.verified));
     setShowProducerModal(true);
   };
@@ -365,8 +410,10 @@ export default function AdminDashboardSuite() {
       id: editingProducer ? editingProducer.id : undefined,
       name: producerName.trim(),
       location: producerLocation.trim(),
+      city: producerCity.trim() || producerLocation.trim(),
       specialty: producerSpecialty.trim() || 'Organic Produce',
       description: producerDescription,
+      story: producerStory || producerDescription,
       verified: producerVerified,
       image_url: editingProducer?.image_url || 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=400&q=80'
     };
@@ -382,6 +429,8 @@ export default function AdminDashboardSuite() {
         setNotice(`Producer "${producerName}" saved successfully.`);
         setShowProducerModal(false);
         fetchInitialData();
+      } else {
+        setNotice(data.error || 'Failed to save producer.');
       }
     } catch {
       setNotice('Failed to save producer.');
@@ -395,6 +444,8 @@ export default function AdminDashboardSuite() {
       if (data.success) {
         setNotice(`Verification status updated for ${currentName}.`);
         fetchInitialData();
+      } else {
+        setNotice(data.error || 'Verification update failed.');
       }
     } catch {
       setNotice('Verification update failed.');
@@ -409,6 +460,8 @@ export default function AdminDashboardSuite() {
       if (data.success) {
         setNotice(`Producer "${name}" deleted.`);
         fetchInitialData();
+      } else {
+        setNotice(data.error || 'Failed to delete producer.');
       }
     } catch {
       setNotice('Failed to delete producer.');
@@ -427,6 +480,8 @@ export default function AdminDashboardSuite() {
       if (data.success) {
         setNotice(`Order ${orderId} status set to ${newStatus}.`);
         setOrders(prev => prev.map(o => String(o.id) === String(orderId) ? { ...o, status: newStatus } : o));
+      } else {
+        setNotice(data.error || 'Failed to update order status.');
       }
     } catch {
       setNotice('Failed to update order status.');
@@ -441,6 +496,8 @@ export default function AdminDashboardSuite() {
       if (data.success) {
         setNotice(`Order ${orderId} removed.`);
         setOrders(prev => prev.filter(o => String(o.id) !== String(orderId)));
+      } else {
+        setNotice(data.error || 'Failed to delete order.');
       }
     } catch {
       setNotice('Failed to delete order.');
@@ -456,11 +513,14 @@ export default function AdminDashboardSuite() {
       if (data.success) {
         setNotice(`User ${name} removed.`);
         setUsers(prev => prev.filter(u => u.id !== userId));
+      } else {
+        setNotice(data.error || 'Failed to delete user.');
       }
     } catch {
       setNotice('Failed to delete user.');
     }
   };
+
 
   // Filtered lists
   const filteredProducts = useMemo(() => {
@@ -562,22 +622,11 @@ export default function AdminDashboardSuite() {
             <p className="text-xs text-[#8B7355] mb-3">Quick Demo Access:</p>
             <button
               type="button"
-              onClick={() => {
-                const adminUser: User = {
-                  id: 1,
-                  email: 'admin@marketlink.pk',
-                  full_name: 'Admin',
-                  role: 'admin',
-                  address: 'Karachi Central',
-                  zipcode: '15201',
-                  subscriptionActive: true
-                };
-                setStoredUser(adminUser);
-                setIsAuthenticated(true);
-              }}
-              className="inline-flex items-center gap-2 rounded-full border border-[#2D543F] bg-[#112319] px-4 py-2 text-xs font-bold text-[#E06D3B] hover:bg-[#E06D3B] hover:text-white transition"
+              disabled={isLoggingIn}
+              onClick={handleDemoLogin}
+              className="inline-flex items-center gap-2 rounded-full border border-[#2D543F] bg-[#112319] px-4 py-2 text-xs font-bold text-[#E06D3B] hover:bg-[#E06D3B] hover:text-white transition disabled:opacity-50"
             >
-              <Sparkles className="w-3.5 h-3.5" /> 1-Click Demo Login
+              {isLoggingIn ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />} 1-Click Demo Login
             </button>
           </div>
 
@@ -1494,7 +1543,7 @@ export default function AdminDashboardSuite() {
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
                   <label className="block font-bold text-[#1D3E2E] mb-1">Price (PKR)</label>
                   <input
@@ -1514,7 +1563,18 @@ export default function AdminDashboardSuite() {
                     value={productUnit}
                     onChange={e => setProductUnit(e.target.value)}
                     className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] font-semibold text-[#1D3E2E]"
-                    placeholder="kg / bunch / dozen"
+                    placeholder="kg / bunch"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#1D3E2E] mb-1">Stock Qty</label>
+                  <input
+                    type="number"
+                    value={productStock}
+                    onChange={e => setProductStock(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] font-semibold text-[#1D3E2E]"
+                    placeholder="20"
                   />
                 </div>
               </div>
@@ -1545,6 +1605,17 @@ export default function AdminDashboardSuite() {
                     ))}
                   </select>
                 </div>
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#1D3E2E] mb-1">Dietary Tags</label>
+                <input
+                  type="text"
+                  value={productDietary}
+                  onChange={e => setProductDietary(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] font-semibold text-[#1D3E2E]"
+                  placeholder="e.g. Organic, Pesticide-Free, Gluten-Free"
+                />
               </div>
 
               <div>
@@ -1626,16 +1697,29 @@ export default function AdminDashboardSuite() {
                 />
               </div>
 
-              <div>
-                <label className="block font-bold text-[#1D3E2E] mb-1">Location / District</label>
-                <input
-                  type="text"
-                  required
-                  value={producerLocation}
-                  onChange={e => setProducerLocation(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] font-semibold text-[#1D3E2E]"
-                  placeholder="e.g. Swat, Khyber Pakhtunkhwa"
-                />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block font-bold text-[#1D3E2E] mb-1">Location / Address</label>
+                  <input
+                    type="text"
+                    required
+                    value={producerLocation}
+                    onChange={e => setProducerLocation(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] font-semibold text-[#1D3E2E]"
+                    placeholder="e.g. Swat, KP"
+                  />
+                </div>
+
+                <div>
+                  <label className="block font-bold text-[#1D3E2E] mb-1">City / Region</label>
+                  <input
+                    type="text"
+                    value={producerCity}
+                    onChange={e => setProducerCity(e.target.value)}
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] font-semibold text-[#1D3E2E]"
+                    placeholder="e.g. Swat"
+                  />
+                </div>
               </div>
 
               <div>
@@ -1650,13 +1734,24 @@ export default function AdminDashboardSuite() {
               </div>
 
               <div>
-                <label className="block font-bold text-[#1D3E2E] mb-1">Farm Story & Description</label>
+                <label className="block font-bold text-[#1D3E2E] mb-1">Description</label>
                 <textarea
-                  rows={3}
+                  rows={2}
                   value={producerDescription}
                   onChange={e => setProducerDescription(e.target.value)}
                   className="w-full px-3.5 py-2 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] text-[#1D3E2E]"
-                  placeholder="Tell customers about the farm heritage..."
+                  placeholder="Short description of the farm..."
+                />
+              </div>
+
+              <div>
+                <label className="block font-bold text-[#1D3E2E] mb-1">Farm Heritage & Story</label>
+                <textarea
+                  rows={2}
+                  value={producerStory}
+                  onChange={e => setProducerStory(e.target.value)}
+                  className="w-full px-3.5 py-2 rounded-xl border border-[#E8E2D5] bg-[#F9F6F0] text-[#1D3E2E]"
+                  placeholder="Detailed heritage story..."
                 />
               </div>
 

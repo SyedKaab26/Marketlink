@@ -52,9 +52,9 @@ export default function OrdersPage() {
               o.user_id === currentUser.id ||
               (o.customer_email && o.customer_email.toLowerCase() === currentUser.email.toLowerCase())
           );
-          setOrders(userOrders.length > 0 ? userOrders : data.orders.slice(0, 3));
+          setOrders(userOrders);
         } else {
-          setOrders(data.orders.slice(0, 3));
+          setOrders([]);
         }
       }
     } catch (err) {

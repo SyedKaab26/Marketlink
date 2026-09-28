@@ -74,6 +74,7 @@ export interface Order {
   delivery_date: string;
   payment_method?: string;
   items_json: OrderItem[] | string;
+  farmer_can_update_status?: boolean;
   shipping_address?: string;
   created_at?: string;
 }

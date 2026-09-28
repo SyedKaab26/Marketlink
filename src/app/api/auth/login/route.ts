@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { findUserByEmail } from '@/lib/db';
 import { getErrorMessage } from '@/lib/utils';
+import { setAuthCookie } from '@/lib/server-auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: false, error: 'Invalid email or password' }, { status: 401 });
       }
 
-      return NextResponse.json({
+      const response = NextResponse.json({
         success: true,
         user: {
           id: 1,
@@ -34,6 +35,8 @@ export async function POST(request: NextRequest) {
         },
         token: 'harvie_jwt_token_sample_123456789'
       });
+      setAuthCookie(response, { id: 1, email: cleanEmail, full_name: 'Admin', role: 'admin' });
+      return response;
     }
 
     // Lookup created user in database
@@ -55,19 +58,22 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
 
-    return NextResponse.json({
+    const authenticatedUser = {
+      id: user.id,
+      email: user.email,
+      full_name: user.full_name,
+      address: user.address || 'Clifton, Karachi',
+      zipcode: user.zipcode || '15201',
+      subscriptionActive: true,
+      role: user.role || 'customer'
+    };
+    const response = NextResponse.json({
       success: true,
-      user: {
-        id: user.id,
-        email: user.email,
-        full_name: user.full_name,
-        address: user.address || 'Clifton, Karachi',
-        zipcode: user.zipcode || '15201',
-        subscriptionActive: true,
-        role: user.role || 'customer'
-      },
+      user: authenticatedUser,
       token: 'harvie_jwt_token_sample_123456789'
     });
+    setAuthCookie(response, authenticatedUser);
+    return response;
   } catch (error: unknown) {
     return NextResponse.json({ success: false, error: getErrorMessage(error) }, { status: 500 });
   }

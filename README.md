@@ -6,6 +6,10 @@ Marco uses an OpenAI-compatible chat completions API for questions that are not 
 
 `OPENAI_MODEL` defaults to `gpt-4o-mini`. For an OpenAI-compatible provider, set `OPENAI_BASE_URL` to its API base URL. Model responses can still be incorrect; MarketLink-specific answers are constrained to the catalog and policy context included with each request.
 
+## Farmer Account Sessions
+
+Set `SESSION_SECRET` to a long, random server-only value in production. Farmer sessions use a signed, HTTP-only cookie and each farmer is associated with one producer through `farmer_profiles.user_id`. Local development uses a development-only signing secret when `SESSION_SECRET` is not set.
+
 ## Getting Started
 
 First, run the development server:

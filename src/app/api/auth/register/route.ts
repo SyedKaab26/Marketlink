@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { saveUser } from '@/lib/db';
 import { getErrorMessage } from '@/lib/utils';
+import { setAuthCookie } from '@/lib/server-auth';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       role: role === 'farmer' ? 'farmer' : 'customer'
     });
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       success: true,
       user: {
         ...newUser,
@@ -32,6 +33,8 @@ export async function POST(request: NextRequest) {
       },
       token: 'harvie_jwt_token_sample_123456789'
     });
+    setAuthCookie(response, newUser);
+    return response;
   } catch (error: unknown) {
     const message = getErrorMessage(error);
     return NextResponse.json({ success: false, error: message }, { status: 400 });

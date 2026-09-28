@@ -3,7 +3,14 @@ import { DISCOVERY_CATEGORIES, DISCOVERY_FARMER_LIST, DISCOVERY_PRODUCTS } from 
 import { Producer, Category, Product, Testimonial, QuizResponse, Order, User, AdminStats } from './types';
 
 type DbResult = [unknown, unknown];
-type DbConnection = { ping: () => Promise<void>; release: () => void };
+type DbConnection = {
+  ping: () => Promise<void>;
+  beginTransaction: () => Promise<void>;
+  commit: () => Promise<void>;
+  rollback: () => Promise<void>;
+  query: (sql: string, params?: unknown[]) => Promise<DbResult>;
+  release: () => void;
+};
 type DbPool = {
   getConnection: () => Promise<DbConnection>;
   query: (sql: string, params?: unknown[]) => Promise<DbResult>;
@@ -158,6 +165,9 @@ const memoryDb: {
   orders: [...INITIAL_ORDERS],
 };
 
+const memoryFarmerProducerIds = new Map<number, number>();
+const memoryFarmerUserIdsByProducer = new Map<number, number>();
+
 function farmerProductsSpecialty(farmerId: string) {
   return DISCOVERY_PRODUCTS.find((product) => product.farmer.id === farmerId)?.category || 'Farm Produce';
 }
@@ -243,21 +253,125 @@ export async function fetchProducers(): Promise<Producer[]> {
   return memoryDb.producers;
 }
 
+export async function getOrCreateFarmerProducer(user: User): Promise<Producer | null> {
+  if (user.role !== 'farmer') return null;
+
+  const db = await getDbPool();
+  if (db) {
+    try {
+      const [ownedRows] = await db.query(
+        `SELECT p.* FROM farmer_profiles fp
+         JOIN producers p ON p.id = fp.producer_id
+         WHERE fp.user_id = ? LIMIT 1`,
+        [user.id]
+      );
+      const owned = (ownedRows as Producer[])[0];
+      if (owned) return owned;
+
+      const [matchingRows] = await db.query(
+        `SELECT p.* FROM producers p
+         LEFT JOIN farmer_profiles fp ON fp.producer_id = p.id
+         WHERE LOWER(p.name) = LOWER(?) AND fp.user_id IS NULL
+         ORDER BY p.id ASC LIMIT 2`,
+        [user.full_name]
+      );
+      const matching = matchingRows as Producer[];
+      let producer = matching.length === 1 ? matching[0] : null;
+
+      if (!producer) {
+        const slug = `farmer-${user.id}`;
+        const [result] = await db.query(
+          `INSERT INTO producers (name, slug, location, city, description, story, image_url, specialty, featured, verified)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, FALSE, FALSE)`,
+          [user.full_name, slug, user.address || 'Pakistan', user.address || '', 'Local farm producer.', '', '', 'Farm Produce']
+        );
+        const producerId = (result as { insertId: number }).insertId;
+        producer = {
+          id: producerId,
+          name: user.full_name,
+          slug,
+          location: user.address || 'Pakistan',
+          city: user.address || '',
+          description: 'Local farm producer.',
+          story: '',
+          image_url: '',
+          specialty: 'Farm Produce',
+          featured: false,
+          verified: false,
+        };
+      }
+
+      await db.query(
+        `INSERT INTO farmer_profiles (producer_id, user_id, legal_name, public_name, approval_status)
+         VALUES (?, ?, ?, ?, 'approved')
+         ON DUPLICATE KEY UPDATE user_id = VALUES(user_id)`,
+        [producer.id, user.id, user.full_name, producer.name]
+      );
+      return producer;
+    } catch (err) {
+      console.error('MySQL Query Error (getOrCreateFarmerProducer):', err);
+    }
+  }
+
+  const rememberedId = memoryFarmerProducerIds.get(user.id);
+  const remembered = memoryDb.producers.find((producer) => producer.id === rememberedId);
+  if (remembered) return remembered;
+
+  const matches = memoryDb.producers.filter(
+    (producer) => producer.name.trim().toLowerCase() === user.full_name.trim().toLowerCase() &&
+      !memoryFarmerUserIdsByProducer.has(producer.id)
+  );
+  const producer = matches.length === 1
+    ? matches[0]
+    : await saveProducer({
+        name: user.full_name,
+        location: user.address || 'Pakistan',
+        city: user.address || '',
+        description: 'Local farm producer.',
+        specialty: 'Farm Produce',
+      });
+  memoryFarmerProducerIds.set(user.id, producer.id);
+  memoryFarmerUserIdsByProducer.set(producer.id, user.id);
+  return producer;
+}
+
 export async function saveProducer(producerData: Partial<Producer>): Promise<Producer> {
   const db = await getDbPool();
   if (db) {
     try {
       if (producerData.id) {
         await db.query(
-          'UPDATE producers SET name = ?, location = ?, specialty = ?, description = ?, image_url = ?, verified = ? WHERE id = ?',
-          [producerData.name, producerData.location, producerData.specialty, producerData.description || '', producerData.image_url || '', producerData.verified ? 1 : 0, producerData.id]
+          'UPDATE producers SET name = ?, location = ?, city = ?, district = ?, specialty = ?, description = ?, story = ?, image_url = ?, verified = ? WHERE id = ?',
+          [
+            producerData.name,
+            producerData.location,
+            producerData.city || producerData.location || '',
+            producerData.district || '',
+            producerData.specialty || 'Farm Produce',
+            producerData.description || '',
+            producerData.story || producerData.description || '',
+            producerData.image_url || '',
+            producerData.verified ? 1 : 0,
+            producerData.id
+          ]
         );
         return { ...producerData } as Producer;
       } else {
         const slug = (producerData.name || 'producer').toLowerCase().replace(/[^a-z0-9]+/g, '-');
         const [result] = await db.query(
-          'INSERT INTO producers (name, slug, location, description, specialty, image_url, verified) VALUES (?, ?, ?, ?, ?, ?, ?)',
-          [producerData.name, slug, producerData.location, producerData.description || '', producerData.specialty, producerData.image_url || '', producerData.verified ? 1 : 0]
+          'INSERT INTO producers (name, slug, location, city, district, description, story, specialty, image_url, verified) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [
+            producerData.name,
+            slug,
+            producerData.location,
+            producerData.city || producerData.location || '',
+            producerData.district || '',
+            producerData.description || '',
+            producerData.story || producerData.description || '',
+            producerData.specialty || 'Farm Produce',
+            producerData.image_url || '',
+            producerData.verified ? 1 : 0
+          ]
         );
         const insertId = (result as { insertId: number }).insertId;
         return { id: insertId, ...producerData, slug, featured: false } as Producer;
@@ -280,7 +394,10 @@ export async function saveProducer(producerData: Partial<Producer>): Promise<Pro
     name: producerData.name || 'New Producer',
     slug: (producerData.name || 'producer').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     location: producerData.location || 'Pakistan',
+    city: producerData.city || producerData.location || '',
+    district: producerData.district || '',
     description: producerData.description || 'Farm-fresh local producer.',
+    story: producerData.story || producerData.description || '',
     image_url: producerData.image_url || 'https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=400&q=80',
     specialty: producerData.specialty || 'Organic Produce',
     featured: false,
@@ -301,7 +418,7 @@ export async function toggleProducerVerified(id: number): Promise<boolean> {
     }
   }
 
-  const producer = memoryDb.producers.find(p => p.id === id);
+  const producer = memoryDb.producers.find(p => p.id === Number(id));
   if (producer) {
     producer.verified = !producer.verified;
     return true;
@@ -320,7 +437,7 @@ export async function deleteProducer(id: number): Promise<boolean> {
     }
   }
 
-  const index = memoryDb.producers.findIndex(p => p.id === id);
+  const index = memoryDb.producers.findIndex(p => p.id === Number(id));
   if (index !== -1) {
     memoryDb.producers.splice(index, 1);
     return true;
@@ -392,12 +509,13 @@ export async function fetchProducts(categoryId?: number, tag?: string, search?: 
 }
 
 export async function saveProduct(productData: Partial<Product>): Promise<Product> {
+  const stockValue = Number(productData.stock ?? 20);
   const db = await getDbPool();
   if (db) {
     try {
       if (productData.id) {
         await db.query(
-          'UPDATE products SET name = ?, price = ?, category_id = ?, producer_id = ?, image_url = ?, description = ?, unit = ?, in_stock = ? WHERE id = ?',
+          'UPDATE products SET name = ?, price = ?, category_id = ?, producer_id = ?, image_url = ?, description = ?, unit = ?, stock = ?, dietary_tags = ?, in_stock = ? WHERE id = ?',
           [
             productData.name,
             productData.price,
@@ -406,15 +524,17 @@ export async function saveProduct(productData: Partial<Product>): Promise<Produc
             productData.image_url,
             productData.description || '',
             productData.unit || 'each',
+            stockValue,
+            productData.dietary_tags || 'Organic',
             productData.in_stock ? 1 : 0,
             productData.id
           ]
         );
-        return { ...productData } as Product;
+        return { ...productData, stock: stockValue } as Product;
       } else {
         const slug = (productData.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-');
         const [result] = await db.query(
-          'INSERT INTO products (name, slug, price, category_id, producer_id, image_url, description, unit, in_stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          'INSERT INTO products (name, slug, price, category_id, producer_id, image_url, description, unit, stock, dietary_tags, in_stock) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
           [
             productData.name,
             slug,
@@ -424,11 +544,13 @@ export async function saveProduct(productData: Partial<Product>): Promise<Produc
             productData.image_url,
             productData.description || '',
             productData.unit || 'each',
+            stockValue,
+            productData.dietary_tags || 'Organic',
             productData.in_stock ? 1 : 0
           ]
         );
         const insertId = (result as { insertId: number }).insertId;
-        return { id: insertId, ...productData, slug } as Product;
+        return { id: insertId, ...productData, stock: stockValue, slug } as Product;
       }
     } catch (err) {
       console.error('MySQL Query Error (saveProduct):', err);
@@ -438,7 +560,7 @@ export async function saveProduct(productData: Partial<Product>): Promise<Produc
   if (productData.id) {
     const index = memoryDb.products.findIndex(p => p.id === Number(productData.id));
     if (index !== -1) {
-      memoryDb.products[index] = { ...memoryDb.products[index], ...productData };
+      memoryDb.products[index] = { ...memoryDb.products[index], ...productData, stock: stockValue };
       return memoryDb.products[index];
     }
   }
@@ -450,10 +572,11 @@ export async function saveProduct(productData: Partial<Product>): Promise<Produc
     slug: (productData.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
     price: productData.price || 100,
     unit: productData.unit || 'kg',
+    stock: stockValue,
     category_id: productData.category_id || 1,
     producer_id: productData.producer_id || 1,
     image_url: productData.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=400&q=80',
-    dietary_tags: 'Organic',
+    dietary_tags: productData.dietary_tags || 'Organic',
     description: productData.description || 'Farm-fresh organic item.',
     featured: false,
     in_stock: productData.in_stock !== false
@@ -473,7 +596,7 @@ export async function deleteProduct(id: number): Promise<boolean> {
     }
   }
 
-  const index = memoryDb.products.findIndex(p => p.id === id);
+  const index = memoryDb.products.findIndex(p => p.id === Number(id));
   if (index !== -1) {
     memoryDb.products.splice(index, 1);
     return true;
@@ -486,7 +609,8 @@ export async function fetchOrders(): Promise<Order[]> {
   if (db) {
     try {
       const [rows] = await db.query(`
-        SELECT o.*, u.full_name as customer_name, u.email as customer_email, u.address as shipping_address
+        SELECT o.*, u.full_name as customer_name, u.email as customer_email,
+          COALESCE(o.shipping_address, u.address) as shipping_address
         FROM orders o
         LEFT JOIN users u ON o.user_id = u.id
         ORDER BY o.created_at DESC, o.id DESC
@@ -640,52 +764,59 @@ export async function saveUser(userData: {
   const role = userData.role || 'customer';
   const zipcode = userData.zipcode || '75500';
   const db = await getDbPool();
-  if (db) {
-    try {
-      const [result] = await db.query(
-        'INSERT INTO users (email, password_hash, full_name, address, zipcode) VALUES (?, ?, ?, ?, ?)',
-        [cleanEmail, userData.password, userData.full_name, userData.address || '', zipcode]
-      );
-      const insertId = (result as { insertId: number }).insertId;
-      try {
-        await db.query('INSERT INTO user_roles (user_id, role) VALUES (?, ?)', [insertId, role]);
-      } catch {
-        // ignore user_roles error if table missing
-      }
-
-      return {
-        id: insertId,
-        email: cleanEmail,
-        full_name: userData.full_name,
-        address: userData.address || '',
-        zipcode,
-        role
-      };
-    } catch (err) {
-      console.error('MySQL Query Error (saveUser):', err);
-    }
+  if (!db) {
+    const newId = memoryDb.users.length + 1;
+    const memUser = {
+      id: newId,
+      email: cleanEmail,
+      full_name: userData.full_name,
+      address: userData.address || '',
+      zipcode,
+      role,
+      password: userData.password,
+      password_hash: userData.password,
+      created_at: new Date().toISOString()
+    };
+    memoryDb.users.push(memUser);
+    return {
+      id: newId,
+      email: cleanEmail,
+      full_name: userData.full_name,
+      address: userData.address || '',
+      zipcode,
+      role
+    };
   }
 
-  const newId = memoryDb.users.length + 1;
-  const newUser: User & { password?: string; password_hash?: string } = {
-    id: newId,
-    email: cleanEmail,
-    password: userData.password,
-    password_hash: userData.password,
-    full_name: userData.full_name,
-    address: userData.address || 'Clifton, Karachi',
-    role,
-    created_at: new Date().toISOString()
-  };
-  memoryDb.users.push(newUser);
+  let connection: DbConnection | null = null;
+  try {
+    connection = await db.getConnection();
+    await connection.beginTransaction();
+    const [result] = await connection.query(
+      'INSERT INTO users (email, password_hash, full_name, address, zipcode) VALUES (?, ?, ?, ?, ?)',
+      [cleanEmail, userData.password, userData.full_name, userData.address || '', zipcode]
+    );
+    const insertId = (result as { insertId: number }).insertId;
+    await connection.query('INSERT INTO user_roles (user_id, role) VALUES (?, ?)', [insertId, role]);
+    await connection.commit();
 
-  return {
-    id: newUser.id,
-    email: newUser.email,
-    full_name: newUser.full_name,
-    address: newUser.address,
-    role: newUser.role
-  };
+    return {
+      id: insertId,
+      email: cleanEmail,
+      full_name: userData.full_name,
+      address: userData.address || '',
+      zipcode,
+      role
+    };
+  } catch (err) {
+    if (connection) {
+      await connection.rollback();
+    }
+    console.error('MySQL Query Error (saveUser):', err);
+    throw new Error('Could not save account to the database. Check the MySQL connection and schema.');
+  } finally {
+    connection?.release();
+  }
 }
 
 export async function deleteUser(id: number): Promise<boolean> {
@@ -699,7 +830,7 @@ export async function deleteUser(id: number): Promise<boolean> {
     }
   }
 
-  const index = (memoryDb.users as User[]).findIndex(u => u.id === id);
+  const index = (memoryDb.users as User[]).findIndex(u => u.id === Number(id));
   if (index !== -1) {
     memoryDb.users.splice(index, 1);
     return true;

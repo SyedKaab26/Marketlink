@@ -90,6 +90,7 @@ CREATE TABLE IF NOT EXISTS orders (
   total_amount DECIMAL(10, 2) NOT NULL,
   status VARCHAR(50) DEFAULT 'Pending',
   delivery_date DATE,
+  shipping_address TEXT NULL,
   items_json JSON NOT NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
@@ -192,6 +193,9 @@ BEGIN
   IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'products' AND COLUMN_NAME = 'listing_status') THEN
     ALTER TABLE products ADD COLUMN listing_status ENUM('draft', 'pending_review', 'published', 'rejected', 'taken_down') NOT NULL DEFAULT 'published' AFTER in_stock;
   END IF;
+  IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders' AND COLUMN_NAME = 'shipping_address') THEN
+    ALTER TABLE orders ADD COLUMN shipping_address TEXT NULL AFTER delivery_date;
+  END IF;
   IF NOT EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.COLUMNS WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'orders' AND COLUMN_NAME = 'lifecycle_status') THEN
     ALTER TABLE orders ADD COLUMN lifecycle_status ENUM('placed', 'accepted', 'ready_for_pickup', 'completed', 'cancelled', 'partially_cancelled') NOT NULL DEFAULT 'placed' AFTER status;
   END IF;
@@ -217,6 +221,11 @@ END$$
 CALL migrate_dashboard_columns()$$
 DROP PROCEDURE migrate_dashboard_columns$$
 DELIMITER ;
+
+UPDATE orders o
+JOIN users u ON u.id = o.user_id
+SET o.shipping_address = u.address
+WHERE (o.shipping_address IS NULL OR o.shipping_address = '') AND u.address IS NOT NULL AND u.address <> '';
 
 CREATE TABLE IF NOT EXISTS user_roles (
   user_id INT NOT NULL,

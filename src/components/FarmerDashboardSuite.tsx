@@ -49,7 +49,7 @@ import {
 import type { Product, Producer, Category, Order, OrderItem } from '@/lib/types';
 import { INITIAL_CATEGORIES } from '@/lib/data';
 import { resolveProductImage } from '@/lib/product-helpers';
-import { getStoredUser } from '@/lib/auth';
+import { getStoredUser, setStoredUser } from '@/lib/auth';
 
 type FarmerTabType =
   | 'overview'
@@ -144,35 +144,7 @@ export default function FarmerDashboardSuite() {
   const [showPackingSlip, setShowPackingSlip] = useState(false);
 
   // Crop Calendar State
-  const [cropList, setCropList] = useState<CropCalendarItem[]>([
-    {
-      id: 1,
-      cropName: 'Organic Heirloom Strawberries',
-      category: 'Fruits',
-      expectedHarvestDate: '2026-10-15',
-      estimatedYield: '250 kg',
-      status: 'Growing',
-      preOrderEnabled: true,
-    },
-    {
-      id: 2,
-      cropName: 'Winter Baby Spinach',
-      category: 'Vegetables',
-      expectedHarvestDate: '2026-10-05',
-      estimatedYield: '100 kg',
-      status: 'Ready to Pick',
-      preOrderEnabled: false,
-    },
-    {
-      id: 3,
-      cropName: 'Honeycrisp Apples',
-      category: 'Fruits',
-      expectedHarvestDate: '2026-11-01',
-      estimatedYield: '500 kg',
-      status: 'Planted',
-      preOrderEnabled: true,
-    },
-  ]);
+  const [cropList, setCropList] = useState<CropCalendarItem[]>([]);
   const [showCropModal, setShowCropModal] = useState(false);
   const [newCropName, setNewCropName] = useState('');
   const [newCropCategory, setNewCropCategory] = useState('Vegetables');
@@ -190,83 +162,23 @@ export default function FarmerDashboardSuite() {
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Payouts State
-  const [bankDetails, setBankDetails] = useState({
-    accountTitle: 'Green Acres Farm Ltd',
-    bankName: 'Agri Business Bank',
-    accountNumber: 'PK98 AGRI 0092 8841 2001',
-  });
-  const [payouts, setPayouts] = useState<PayoutTransaction[]>([
-    {
-      id: 'PAY-9821',
-      amount: 450.0,
-      fee: 36.0,
-      netAmount: 414.0,
-      status: 'Completed',
-      date: '2026-09-20',
-      bankAccount: 'PK98 AGRI **** 2001',
-    },
-    {
-      id: 'PAY-8734',
-      amount: 620.0,
-      fee: 49.6,
-      netAmount: 570.4,
-      status: 'Completed',
-      date: '2026-09-10',
-      bankAccount: 'PK98 AGRI **** 2001',
-    },
-    {
-      id: 'PAY-7612',
-      amount: 310.0,
-      fee: 24.8,
-      netAmount: 285.2,
-      status: 'Processing',
-      date: '2026-09-25',
-      bankAccount: 'PK98 AGRI **** 2001',
-    },
-  ]);
+  const [bankDetails, setBankDetails] = useState({ accountTitle: '', bankName: '', accountNumber: '' });
+  const [payouts, setPayouts] = useState<PayoutTransaction[]>([]);
   const [showPayoutModal, setShowPayoutModal] = useState(false);
 
   // Reviews State
-  const [reviews, setReviews] = useState<ReviewItem[]>([
-    {
-      id: 1,
-      customerName: 'Ayesha Khan',
-      productName: 'Organic Heirloom Tomatoes',
-      rating: 5,
-      comment: 'Super fresh and juicy tomatoes! You can really taste the natural soil quality.',
-      date: '2026-09-22',
-      reply: 'Thank you Ayesha! Hand-picked directly from our south field.',
-    },
-    {
-      id: 2,
-      customerName: 'Tariq Mehmood',
-      productName: 'Raw Unfiltered Wildflower Honey',
-      rating: 5,
-      comment: 'Best honey I have purchased online. Pure and authentic.',
-      date: '2026-09-18',
-    },
-    {
-      id: 3,
-      customerName: 'Sara Ali',
-      productName: 'Fresh Farm Spinach',
-      rating: 4,
-      comment: 'Very fresh leaves, arrived well packed.',
-      date: '2026-09-15',
-    },
-  ]);
+  const [reviews, setReviews] = useState<ReviewItem[]>([]);
   const [replyText, setReplyText] = useState<{ [key: number]: string }>({});
 
   // Check auth session
   useEffect(() => {
-    const savedAuth = localStorage.getItem('marketlink_farmer_auth');
     const storedUser = getStoredUser();
-    if (savedAuth === 'true' || storedUser?.role === 'farmer' || storedUser?.role === 'admin') {
+    if (storedUser?.role === 'farmer' || storedUser?.role === 'admin') {
       setIsAuthenticated(true);
-      if (savedAuth !== 'true') {
-        localStorage.setItem('marketlink_farmer_auth', 'true');
-      }
+      fetchInitialData();
+    } else {
+      setLoading(false);
     }
-    fetchInitialData();
   }, []);
 
   // Sync current producer details when selectedProducerId changes
@@ -289,11 +201,20 @@ export default function FarmerDashboardSuite() {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
+      const user = getStoredUser();
+      const scope = user?.role === 'farmer' ? '?scope=farmer' : '';
       const [prodRes, procRes, ordRes] = await Promise.all([
-        fetch('/api/products').then((r) => r.json()).catch(() => ({ products: [] })),
-        fetch('/api/producers').then((r) => r.json()).catch(() => ({ producers: [] })),
-        fetch('/api/orders').then((r) => r.json()).catch(() => ({ orders: [] })),
+        fetch(`/api/products${scope}`).then((r) => r.json()).catch(() => ({ products: [] })),
+        fetch(`/api/producers${scope}`).then((r) => r.json()).catch(() => ({ producers: [] })),
+        fetch(`/api/orders${scope}`).then((r) => r.json()).catch(() => ({ orders: [] })),
       ]);
+
+      if (user?.role === 'farmer' && [prodRes, procRes, ordRes].some((result) => result.success === false)) {
+        setStoredUser(null);
+        setIsAuthenticated(false);
+        setNotice('Your session expired. Please log in again.');
+        return;
+      }
 
       if (prodRes.products) setAllProducts(prodRes.products);
       if (procRes.producers && procRes.producers.length > 0) {
@@ -324,8 +245,9 @@ export default function FarmerDashboardSuite() {
       const data = await response.json();
 
       if (data.success) {
+        setStoredUser(data.user);
         setIsAuthenticated(true);
-        localStorage.setItem('marketlink_farmer_auth', 'true');
+        await fetchInitialData();
         setNotice('Successfully logged in to Farmer Portal.');
       } else {
         setLoginError(data.error || 'Invalid farmer credentials.');
@@ -339,7 +261,8 @@ export default function FarmerDashboardSuite() {
 
   const handleLogout = () => {
     setIsAuthenticated(false);
-    localStorage.removeItem('marketlink_farmer_auth');
+    setStoredUser(null);
+    void fetch('/api/auth/logout', { method: 'POST' });
     setNotice('Logged out of Farmer Portal.');
   };
 
@@ -377,7 +300,7 @@ export default function FarmerDashboardSuite() {
       } else if (Array.isArray(order.items_json)) {
         items = order.items_json;
       }
-      if (items.length === 0) return true;
+      if (items.length === 0) return false;
       return items.some((item: any) => {
         if (item.product?.producer_id) {
           return item.product.producer_id === selectedProducerId;
@@ -389,7 +312,7 @@ export default function FarmerDashboardSuite() {
         if (itemName && farmerProductNames.has(itemName)) {
           return true;
         }
-        return true;
+        return false;
       });
     });
   }, [allOrders, selectedProducerId, farmerProductNames]);
@@ -473,7 +396,7 @@ export default function FarmerDashboardSuite() {
     if (!productName || !productPrice) return;
 
     const payload: Partial<Product> = {
-      id: editingProduct ? editingProduct.id : Date.now(),
+      id: editingProduct ? editingProduct.id : undefined,
       name: productName,
       slug: productName.toLowerCase().replace(/\s+/g, '-'),
       producer_id: selectedProducerId,
@@ -489,24 +412,36 @@ export default function FarmerDashboardSuite() {
       in_stock: productInStock,
     };
 
-    if (editingProduct) {
-      setAllProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? (payload as Product) : p)));
-      setNotice(`Updated "${productName}" successfully.`);
-    } else {
-      setAllProducts((prev) => [payload as Product, ...prev]);
-      setNotice(`Added new product "${productName}".`);
-    }
-
     setShowProductModal(false);
 
     try {
-      await fetch('/api/products', {
+      const res = await fetch('/api/products', {
         method: editingProduct ? 'PUT' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       });
+      const data = await res.json();
+      if (data.success && data.product) {
+        if (editingProduct) {
+          setAllProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? data.product : p)));
+          setNotice(`Updated "${productName}" successfully.`);
+        } else {
+          setAllProducts((prev) => [data.product, ...prev]);
+          setNotice(`Added new product "${productName}".`);
+        }
+      } else {
+        setNotice(data.error || 'Could not save product.');
+      }
     } catch {
       // offline fallback
+      if (editingProduct) {
+        setAllProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, ...payload } as Product : p)));
+        setNotice(`Updated "${productName}" (offline mode).`);
+      } else {
+        const offlineProduct = { ...payload, id: Date.now() } as Product;
+        setAllProducts((prev) => [offlineProduct, ...prev]);
+        setNotice(`Added "${productName}" (offline mode).`);
+      }
     }
   };
 
@@ -757,7 +692,7 @@ export default function FarmerDashboardSuite() {
           </Link>
 
           {/* Farm Selector dropdown if multiple farms exist */}
-          {producersList.length > 1 && (
+          {getStoredUser()?.role === 'admin' && producersList.length > 1 && (
             <div className="hidden md:flex items-center gap-2 ml-4 pl-4 border-l border-emerald-800/60">
               <Store className="w-4 h-4 text-emerald-400" />
               <select
@@ -1012,6 +947,8 @@ export default function FarmerDashboardSuite() {
                             {order.status === 'Pending' && (
                               <button
                                 onClick={() => handleUpdateOrderStatus(order.id, 'Packed')}
+                                disabled={order.farmer_can_update_status === false}
+                                title={order.farmer_can_update_status === false ? 'This order also contains another farm’s products.' : undefined}
                                 className="px-3 py-1.5 rounded-lg bg-[#E06D3B] hover:brightness-110 text-white text-xs font-bold transition"
                               >
                                 Mark Packed
@@ -1256,6 +1193,8 @@ export default function FarmerDashboardSuite() {
                           <select
                             value={order.status}
                             onChange={(e) => handleUpdateOrderStatus(order.id, e.target.value as Order['status'])}
+                            disabled={order.farmer_can_update_status === false}
+                            title={order.farmer_can_update_status === false ? 'This order also contains another farm’s products.' : undefined}
                             className="bg-black/30 border border-emerald-800 text-white text-xs font-bold rounded-lg px-2.5 py-1.5 focus:outline-none"
                           >
                             <option value="Pending">Pending</option>
