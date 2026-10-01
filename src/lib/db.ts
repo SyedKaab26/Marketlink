@@ -159,9 +159,6 @@ const memoryDb: {
   orders: [...INITIAL_ORDERS],
 };
 
-const memoryFarmerProducerIds = new Map<number, number>();
-const memoryFarmerUserIdsByProducer = new Map<number, number>();
-
 function farmerProductsSpecialty(farmerId: string) {
   return DISCOVERY_PRODUCTS.find((product) => product.farmer.id === farmerId)?.category || 'Farm Produce';
 }
@@ -251,8 +248,11 @@ export async function getOrCreateFarmerProducer(user: User): Promise<Producer | 
   if (user.role !== 'farmer') return null;
 
   const db = await getDbPool();
-  if (db) {
-    try {
+  if (!db) {
+    throw new Error('MySQL is unavailable. Configure MYSQL_* and run schema.sql before saving farmer data.');
+  }
+
+  try {
       const [ownedRows] = await db.query(
         `SELECT p.* FROM farmer_profiles fp
          JOIN producers p ON p.id = fp.producer_id
@@ -302,31 +302,10 @@ export async function getOrCreateFarmerProducer(user: User): Promise<Producer | 
         [producer.id, user.id, user.full_name, producer.name]
       );
       return producer;
-    } catch (err) {
-      console.error('MySQL Query Error (getOrCreateFarmerProducer):', err);
-    }
+  } catch (err) {
+    console.error('MySQL Query Error (getOrCreateFarmerProducer):', err);
+    throw new Error('Could not save farmer profile. Check the MySQL connection and schema.');
   }
-
-  const rememberedId = memoryFarmerProducerIds.get(user.id);
-  const remembered = memoryDb.producers.find((producer) => producer.id === rememberedId);
-  if (remembered) return remembered;
-
-  const matches = memoryDb.producers.filter(
-    (producer) => producer.name.trim().toLowerCase() === user.full_name.trim().toLowerCase() &&
-      !memoryFarmerUserIdsByProducer.has(producer.id)
-  );
-  const producer = matches.length === 1
-    ? matches[0]
-    : await saveProducer({
-        name: user.full_name,
-        location: user.address || 'Pakistan',
-        city: user.address || '',
-        description: 'Local farm producer.',
-        specialty: 'Farm Produce',
-      });
-  memoryFarmerProducerIds.set(user.id, producer.id);
-  memoryFarmerUserIdsByProducer.set(producer.id, user.id);
-  return producer;
 }
 
 export async function saveProducer(producerData: Partial<Producer>): Promise<Producer> {
@@ -505,8 +484,11 @@ export async function fetchProducts(categoryId?: number, tag?: string, search?: 
 export async function saveProduct(productData: Partial<Product>): Promise<Product> {
   const stockValue = Number(productData.stock ?? 20);
   const db = await getDbPool();
-  if (db) {
-    try {
+  if (!db) {
+    throw new Error('MySQL is unavailable. Configure MYSQL_* and run schema.sql before saving products.');
+  }
+
+  try {
       if (productData.id) {
         await db.query(
           'UPDATE products SET name = ?, price = ?, category_id = ?, producer_id = ?, image_url = ?, description = ?, unit = ?, stock = ?, dietary_tags = ?, in_stock = ? WHERE id = ?',
@@ -546,37 +528,10 @@ export async function saveProduct(productData: Partial<Product>): Promise<Produc
         const insertId = (result as { insertId: number }).insertId;
         return { id: insertId, ...productData, stock: stockValue, slug } as Product;
       }
-    } catch (err) {
-      console.error('MySQL Query Error (saveProduct):', err);
-    }
+  } catch (err) {
+    console.error('MySQL Query Error (saveProduct):', err);
+    throw new Error('Could not save product to the database. Check the MySQL connection and schema.');
   }
-
-  if (productData.id) {
-    const index = memoryDb.products.findIndex(p => p.id === Number(productData.id));
-    if (index !== -1) {
-      memoryDb.products[index] = { ...memoryDb.products[index], ...productData, stock: stockValue };
-      return memoryDb.products[index];
-    }
-  }
-
-  const newId = memoryDb.products.length + 1;
-  const newProduct: Product = {
-    id: newId,
-    name: productData.name || 'New Product',
-    slug: (productData.name || 'product').toLowerCase().replace(/[^a-z0-9]+/g, '-'),
-    price: productData.price || 100,
-    unit: productData.unit || 'kg',
-    stock: stockValue,
-    category_id: productData.category_id || 1,
-    producer_id: productData.producer_id || 1,
-    image_url: productData.image_url || 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=400&q=80',
-    dietary_tags: productData.dietary_tags || 'Organic',
-    description: productData.description || 'Farm-fresh organic item.',
-    featured: false,
-    in_stock: productData.in_stock !== false
-  };
-  memoryDb.products.push(newProduct);
-  return newProduct;
 }
 
 export async function deleteProduct(id: number): Promise<boolean> {
@@ -754,6 +709,11 @@ export async function saveUser(userData: {
   zipcode?: string;
   role?: 'customer' | 'farmer' | 'admin';
 }): Promise<User> {
+  const db = await getDbPool();
+  if (!db) {
+    throw new Error('MySQL is unavailable. Configure MYSQL_* and run schema.sql before registering.');
+  }
+
   const cleanEmail = userData.email.trim().toLowerCase();
   const existing = await findUserByEmail(cleanEmail);
   if (existing) {
@@ -763,29 +723,6 @@ export async function saveUser(userData: {
   const role = userData.role || 'customer';
   const zipcode = userData.zipcode || '75500';
   const passwordHash = await hashPassword(userData.password);
-  const db = await getDbPool();
-  if (!db) {
-    const newId = Math.max(1000, ...memoryDb.users.map((user) => user.id + 1));
-    const memUser = {
-      id: newId,
-      email: cleanEmail,
-      full_name: userData.full_name,
-      address: userData.address || '',
-      zipcode,
-      role,
-      password_hash: passwordHash,
-      created_at: new Date().toISOString()
-    };
-    memoryDb.users.push(memUser);
-    return {
-      id: newId,
-      email: cleanEmail,
-      full_name: userData.full_name,
-      address: userData.address || '',
-      zipcode,
-      role
-    };
-  }
 
   let connection: DbConnection | null = null;
   try {

@@ -438,15 +438,7 @@ export default function FarmerDashboardSuite() {
         setNotice(data.error || 'Could not save product.');
       }
     } catch {
-      // offline fallback
-      if (editingProduct) {
-        setAllProducts((prev) => prev.map((p) => (p.id === editingProduct.id ? { ...p, ...payload } as Product : p)));
-        setNotice(`Updated "${productName}" (offline mode).`);
-      } else {
-        const offlineProduct = { ...payload, id: Date.now() } as Product;
-        setAllProducts((prev) => [offlineProduct, ...prev]);
-        setNotice(`Added "${productName}" (offline mode).`);
-      }
+      setNotice('Could not reach the database. Product changes were not saved.');
     }
   };
 

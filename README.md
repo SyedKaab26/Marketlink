@@ -10,6 +10,10 @@ Marco uses an OpenAI-compatible chat completions API for questions that are not 
 
 Set `SESSION_SECRET` to a long, random server-only value in production. Farmer sessions use a signed, HTTP-only cookie and each farmer is associated with one producer through `farmer_profiles.user_id`. Local development uses a development-only signing secret when `SESSION_SECRET` is not set.
 
+## MySQL Database
+
+Account registration, farmer profiles, and product changes require a reachable MySQL database. Configure `MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_USER`, `MYSQL_PASSWORD`, and `MYSQL_DATABASE` in `.env.local`, then run `schema.sql` against that server. Without MySQL, read-only catalog pages use demo data, but database writes return an error instead of claiming they were saved.
+
 ## Admin Access
 
 Configure server-only `ADMIN_EMAIL` and `ADMIN_PASSWORD` values for environment-based administrator login, or provision an administrator account in the database. Demo and default admin credentials are disabled. New account passwords are stored as salted scrypt hashes; existing plain-text database passwords are upgraded after a successful login.

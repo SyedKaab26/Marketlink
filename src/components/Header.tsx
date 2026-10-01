@@ -3,7 +3,7 @@
 import React, { FormEvent, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { ChevronDown, Home, LogIn, LogOut, Menu, Search, ShoppingBag, Store, User as UserIcon, X } from 'lucide-react';
 import { Category, Product } from '@/lib/types';
 
@@ -56,6 +56,7 @@ const categoryMenu = [
 
 export default function Header({ cartCount, onOpenCart, onOpenQuiz, onOpenAuth, user, onLogout }: HeaderProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryData, setCategoryData] = useState<Category[]>([]);
@@ -110,6 +111,24 @@ export default function Header({ cartCount, onOpenCart, onOpenQuiz, onOpenAuth, 
   }, []);
 
   useEffect(() => {
+    if (window.location.hash === '#markets') {
+      const target = document.getElementById('markets');
+      if (!target) return;
+
+      const scrollToMarket = () => {
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      };
+
+      const frame = window.requestAnimationFrame ? window.requestAnimationFrame(scrollToMarket) : window.setTimeout(scrollToMarket, 0);
+      return () => {
+        if (frame && typeof window.cancelAnimationFrame === 'function') {
+          window.cancelAnimationFrame(frame);
+        }
+      };
+    }
+  }, [pathname]);
+
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         closeCategoryMenu();
@@ -155,12 +174,9 @@ export default function Header({ cartCount, onOpenCart, onOpenQuiz, onOpenAuth, 
 
   const handleMarketClick = (event: React.MouseEvent<HTMLAnchorElement>) => {
     setMobileMenuOpen(false);
-    if (window.location.pathname !== '/') return;
+    setMenuOpen(false);
     event.preventDefault();
-    window.history.replaceState(null, '', '/#markets');
-    window.requestAnimationFrame(() => {
-      document.getElementById('markets')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    });
+    router.push('/#markets');
   };
 
   return (
